@@ -83,9 +83,9 @@ void _removeBackgroundSign(char *cmd_line)
 
 // TODO: Add your implementation for classes in Commands.h
 
-SmallShell::SmallShell()
+SmallShell::SmallShell(std::string name)
 {
-  // TODO: add your implementation
+  updateShellName(name);
 }
 
 SmallShell::~SmallShell()
@@ -99,22 +99,22 @@ SmallShell::~SmallShell()
 Command *SmallShell::CreateCommand(const char *cmd_line)
 {
   // For example:
-  /*
   string cmd_s = _trim(string(cmd_line));
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
 
-  if (firstWord.compare("pwd") == 0) {
-    return new GetCurrDirCommand(cmd_line);
+  if (firstWord.compare("chprompt") == 0)
+  {
+    return new ChangePromptCommand(cmd_line, this);
   }
-  else if (firstWord.compare("showpid") == 0) {
-    return new ShowPidCommand(cmd_line);
-  }
-  else if ...
-  .....
-  else {
-    return new ExternalCommand(cmd_line);
-  }
-  */
+  // else if (firstWord.compare("showpid") == 0) {
+  //   return new ShowPidCommand(cmd_line);
+  // }
+  // else if ...
+  // .....
+  // else {
+  //   return new ExternalCommand(cmd_line);
+  // }
+
   return nullptr;
 }
 
@@ -122,7 +122,47 @@ void SmallShell::executeCommand(const char *cmd_line)
 {
   // TODO: Add your implementation here
   // for example:
-  // Command* cmd = CreateCommand(cmd_line);
-  // cmd->execute();
+  Command *cmd = CreateCommand(cmd_line);
+  if (cmd != nullptr)
+    cmd->execute();
   // Please note that you must fork smash process for some commands (e.g., external commands....)
+}
+
+void SmallShell::updateShellName(std::string name)
+{
+  this->name = _trim(name) + "> ";
+}
+
+Command::Command(const char *cmd_line)
+{
+  numOfArgs = _parseCommandLine(cmd_line, args);
+}
+
+Command::~Command()
+{
+  for (int i = 0; i < numOfArgs - 1; i++)
+  {
+    delete args[i];
+  }
+  delete args;
+}
+
+BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line)
+{
+}
+
+ChangePromptCommand::ChangePromptCommand(const char *cmd_line, SmallShell *shell) : BuiltInCommand(cmd_line)
+{
+  this->shell = shell;
+}
+
+void ChangePromptCommand::execute()
+{
+  cout << "WTF!";
+  if (numOfArgs <= 1)
+  {
+    this->shell->updateShellName("smash");
+    return;
+  }
+  this->shell->updateShellName(args[1]);
 }
