@@ -166,7 +166,9 @@ void GetCurrDirCommand::execute()
   {
     cout << cwd << "\n";
   }
+}
 
-  void ShowPidCommand::execute()
-  {
-    printf("smash pid is %d\n", getpid());
+void ShowPidCommand::execute()
+{
+  printf("smash pid is %d\n", getpid());
+}
