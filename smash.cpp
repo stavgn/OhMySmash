@@ -4,6 +4,7 @@
 #include <signal.h>
 #include "Commands.h"
 #include "signals.h"
+#include "Exception.h"
 
 int main(int argc, char *argv[])
 {
@@ -21,10 +22,17 @@ int main(int argc, char *argv[])
     SmallShell &smash = SmallShell::getInstance("smash");
     while (true)
     {
-        std::cout << smash.name;
-        std::string cmd_line;
-        std::getline(std::cin, cmd_line);
-        smash.executeCommand(cmd_line.c_str());
+        try
+        {
+            std::cout << smash.name;
+            std::string cmd_line;
+            std::getline(std::cin, cmd_line);
+            smash.executeCommand(cmd_line.c_str());
+        }
+        catch (Exception &e)
+        {
+            e.handle();
+        }
     }
     return 0;
 }
