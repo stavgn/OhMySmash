@@ -1,10 +1,3 @@
-#include <unistd.h>
-#include <string.h>
-#include <iostream>
-#include <vector>
-#include <sstream>
-#include <sys/wait.h>
-#include <iomanip>
 #include "Commands.h"
 
 using namespace std;
@@ -106,14 +99,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new ChangePromptCommand(cmd_line, this);
   }
-  // else if (firstWord.compare("showpid") == 0) {
-  //   return new ShowPidCommand(cmd_line);
-  // }
-  // else if ...
-  // .....
-  // else {
-  //   return new ExternalCommand(cmd_line);
-  // }
+  else if (firstWord.compare("pwd") == 0)
+  {
+    return new GetCurrDirCommand();
+  }
 
   return nullptr;
 }
@@ -163,4 +152,13 @@ void ChangePromptCommand::execute()
     return;
   }
   this->shell->updateShellName(args[1]);
+}
+
+void GetCurrDirCommand::execute()
+{
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) != NULL)
+  {
+    cout << cwd << "\n";
+  }
 }

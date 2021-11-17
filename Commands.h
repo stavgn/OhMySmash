@@ -1,8 +1,14 @@
 #ifndef SMASH_COMMAND_H_
 #define SMASH_COMMAND_H_
 
-#include <vector>
 #include <string>
+#include <unistd.h>
+#include <string.h>
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <sys/wait.h>
+#include <iomanip>
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
@@ -13,6 +19,7 @@ class Command
 public:
   char *args[21];
   int numOfArgs;
+  Command() = default;
   Command(const char *cmd_line);
   virtual ~Command();
   virtual void execute() = 0;
@@ -24,6 +31,7 @@ public:
 class BuiltInCommand : public Command
 {
 public:
+  BuiltInCommand() = default;
   BuiltInCommand(const char *cmd_line);
   virtual ~BuiltInCommand() = default;
 };
@@ -67,7 +75,6 @@ class ChangeDirCommand : public BuiltInCommand
 class GetCurrDirCommand : public BuiltInCommand
 {
 public:
-  GetCurrDirCommand(const char *cmd_line);
   virtual ~GetCurrDirCommand() {}
   void execute() override;
 };
