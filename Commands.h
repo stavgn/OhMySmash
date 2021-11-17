@@ -9,15 +9,27 @@
 #include <sstream>
 #include <sys/wait.h>
 #include <iomanip>
+#include <linux/limits.h>
+#include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
+
+#define DO_SYS(syscall)               \
+  do                                  \
+  {                                   \
+    /* safely invoke a system call */ \
+    if ((syscall) == -1)              \
+    {                                 \
+      thorw SysCallException(#syscall);               \
+    }                                 \
+  } while (0)
 
 class Command
 {
 
 public:
-  char *args[21];
+  char *args[COMMAND_MAX_ARGS];
   int numOfArgs;
   Command() = default;
   Command(const char *cmd_line);

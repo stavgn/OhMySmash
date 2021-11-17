@@ -15,15 +15,17 @@ protected:
     std::string msg;
 
 public:
-    virtual void handle();
-}
+    virtual void handle() {}
+};
 
-class SysCallExcpetion : public Exception
+class SysCallException : public Exception
 {
+public:
     void handle() override
     {
-        perror("smash error: " + msg + "failed");
+        msg = "smash error: " + msg + "failed";
+        perror(msg.c_str());
     }
-}
+};
 
 #endif //EXCEPTION_H_

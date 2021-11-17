@@ -170,5 +170,5 @@ void GetCurrDirCommand::execute()
 
 void ShowPidCommand::execute()
 {
-  printf("smash pid is %d\n", getpid());
+  printf("smash pid is %d\n",getpid());
 }
