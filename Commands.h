@@ -5,6 +5,8 @@
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
+#define WHITESPACE " \t\n\r\f\v" 
+
 
 class Command {
 // TODO: Add your data members
