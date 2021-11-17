@@ -82,7 +82,7 @@ public:
 class ShowPidCommand : public BuiltInCommand
 {
 public:
-  ShowPidCommand(const char *cmd_line);
+  ShowPidCommand() {}
   virtual ~ShowPidCommand() {}
   void execute() override;
 };

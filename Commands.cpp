@@ -99,9 +99,14 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new ChangePromptCommand(cmd_line, this);
   }
+
   else if (firstWord.compare("pwd") == 0)
   {
     return new GetCurrDirCommand();
+  }
+  else if (firstWord.compare("showpid") == 0)
+  {
+    return new ShowPidCommand();
   }
 
   return nullptr;
@@ -161,4 +166,7 @@ void GetCurrDirCommand::execute()
   {
     cout << cwd << "\n";
   }
-}
+
+  void ShowPidCommand::execute()
+  {
+    printf("smash pid is %d\n", getpid());
