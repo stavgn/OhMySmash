@@ -144,7 +144,6 @@ Command::~Command()
   {
     delete args[i];
   }
-  delete args;
 }
 
 BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line)
@@ -158,7 +157,6 @@ ChangePromptCommand::ChangePromptCommand(const char *cmd_line, SmallShell *shell
 
 void ChangePromptCommand::execute()
 {
-  cout << "WTF!";
   if (numOfArgs <= 1)
   {
     this->shell->updateShellName("smash");

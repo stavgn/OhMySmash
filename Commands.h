@@ -11,7 +11,7 @@ class Command
 {
 
 public:
-  char **args = nullptr;
+  char *args[21];
   int numOfArgs;
   Command(const char *cmd_line);
   virtual ~Command();
