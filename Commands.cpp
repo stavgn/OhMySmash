@@ -106,9 +106,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new ChangePromptCommand(cmd_line, this);
   }
-  // else if (firstWord.compare("showpid") == 0) {
-  //   return new ShowPidCommand(cmd_line);
-  // }
+  else if (firstWord.compare("showpid") == 0)
+  {
+    return new ShowPidCommand();
+  }
   // else if ...
   // .....
   // else {
@@ -163,4 +164,9 @@ void ChangePromptCommand::execute()
     return;
   }
   this->shell->updateShellName(args[1]);
+}
+
+void ShowPidCommand::execute()
+{
+  printf("smash pid is %d\n", getpid());
 }

@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
@@ -13,6 +15,7 @@ class Command
 public:
   char *args[21];
   int numOfArgs;
+  Command() {};
   Command(const char *cmd_line);
   virtual ~Command();
   virtual void execute() = 0;
@@ -24,6 +27,7 @@ public:
 class BuiltInCommand : public Command
 {
 public:
+  BuiltInCommand() = default;
   BuiltInCommand(const char *cmd_line);
   virtual ~BuiltInCommand() = default;
 };
@@ -75,7 +79,7 @@ public:
 class ShowPidCommand : public BuiltInCommand
 {
 public:
-  ShowPidCommand(const char *cmd_line);
+  ShowPidCommand() {}
   virtual ~ShowPidCommand() {}
   void execute() override;
 };
