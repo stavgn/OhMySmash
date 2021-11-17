@@ -18,7 +18,6 @@ using namespace std;
 #else
 #define FUNC_ENTRY()
 #define FUNC_EXIT()
-#define WHITESPACE ' '
 #endif
 
 string _ltrim(const std::string &s)
