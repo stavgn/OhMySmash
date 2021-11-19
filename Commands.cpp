@@ -202,7 +202,7 @@ void ShowPidCommand::execute()
   printf("smash pid is %d\n", getpid());
 }
 
-CreateOrOverWriteToFile::CreateOrOverWriteToFile(std::string filename) : IO()
+WriteToFile::WriteToFile(std::string filename) : IO()
 {
   this->filename = filename;
 };
@@ -217,7 +217,18 @@ void CreateOrOverWriteToFile::config()
   this->stdout = stdout;
 }
 
-void CreateOrOverWriteToFile::revert()
+void CreateOrAppendToFile::config()
+{
+  int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0666);
+  lseek(fd, 0, SEEK_END);
+  int stdout = dup(1);
+  close(1);
+  dup(fd);
+  this->fd = fd;
+  this->stdout = stdout;
+}
+
+void WriteToFile::revert()
 {
   close(1);
   dup(stdout);

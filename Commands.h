@@ -35,18 +35,31 @@ public:
   virtual void revert() = 0;
 };
 
-class CreateOrOverWriteToFile : public IO
+class WriteToFile : public IO
 {
-private:
+protected:
   std::string filename;
   int fd;
   int stdout;
+  WriteToFile(std::string filename);
+  ~WriteToFile() = default;
+  void revert() override;
+};
 
+class CreateOrOverWriteToFile : public WriteToFile
+{
 public:
-  CreateOrOverWriteToFile(std::string filename);
+  CreateOrOverWriteToFile(std::string filename) : WriteToFile(filename) {}
   ~CreateOrOverWriteToFile() = default;
   void config() override;
-  void revert() override;
+};
+
+class CreateOrAppendToFile : public WriteToFile
+{
+public:
+  CreateOrAppendToFile(std::string filename) : WriteToFile(filename) {}
+  ~CreateOrAppendToFile() = default;
+  void config() override;
 };
 
 class AppendToFile : public IO
@@ -63,6 +76,10 @@ public:
     if (std::string(args[numOfArgs - 2]) == ">")
     {
       return new CreateOrOverWriteToFile(args[numOfArgs - 1]);
+    }
+    else if (std::string(args[numOfArgs - 2]) == ">>")
+    {
+      return new CreateOrAppendToFile(args[numOfArgs - 1]);
     }
 
     return nullptr;
