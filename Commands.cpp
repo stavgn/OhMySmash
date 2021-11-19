@@ -74,6 +74,11 @@ void _removeBackgroundSign(char *cmd_line)
   cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
 }
 
+int is_piped_command(string cmd_s)
+{
+  return cmd_s.find('|') != std::string::npos;
+}
+
 // TODO: Add your implementation for classes in Commands.h
 
 SmallShell::SmallShell(std::string name)
@@ -95,11 +100,14 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   string cmd_s = _trim(string(cmd_line));
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
 
-  if (firstWord.compare("chprompt") == 0)
+  if (is_piped_command(cmd_s))
+  {
+    return new PipedCommands(cmd_line, this);
+  }
+  else if (firstWord.compare("chprompt") == 0)
   {
     return new ChangePromptCommand(cmd_line, this);
   }
-
   else if (firstWord.compare("pwd") == 0)
   {
     return new GetCurrDirCommand(cmd_line);
@@ -117,13 +125,7 @@ void SmallShell::executeCommand(const char *cmd_line)
   // TODO: Add your implementation here
   // for example:
   Command *cmd = CreateCommand(cmd_line);
-  if (cmd != nullptr)
-  {
-    cmd->prepare();
-    cmd->execute();
-    cmd->cleanup();
-    // Please note that you must fork smash process for some commands (e.g., external commands....)
-  }
+  SmallShell::exec_util(cmd);
 }
 
 void SmallShell::updateShellName(std::string name)
@@ -134,7 +136,8 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  IOConfig = IOFactory::getIO(args, numOfArgs);
+  if (IOConfig == nullptr)
+    IOConfig = IOFactory::getIO(args, numOfArgs);
 }
 
 void Command::prepare()
@@ -234,4 +237,67 @@ void WriteToFile::revert()
   dup(stdout);
   close(stdout);
   close(fd);
+}
+
+PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
+{
+  string cmd_s = string(cmd_line);
+  const char *cmd_line1 = cmd_s.substr(0, cmd_s.find_first_of('|')).c_str();
+  const char *cmd_line2 = cmd_s.substr(cmd_s.find_first_of('|') + 1).c_str();
+  cmd1 = shell->CreateCommand(cmd_line1);
+  cmd2 = shell->CreateCommand(cmd_line2);
+  IOConfig = IOFactory::getPipe();
+}
+
+PipedCommands::~PipedCommands()
+{
+  delete cmd1;
+  delete cmd2;
+}
+
+void PipedCommands::execute()
+{
+  Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
+  if (PipeIO->is_father)
+  {
+    SmallShell::exec_util(cmd1);
+  }
+  else
+  {
+    SmallShell::exec_util(cmd2);
+    exit(0);
+  }
+}
+
+Pipe::Pipe()
+{
+  pipe(my_pipe);
+}
+
+void Pipe::config()
+{
+  is_father = fork() != 0;
+  if (is_father)
+  {
+    stdout = dup(1);
+    dup2(my_pipe[1], 1);
+    close(my_pipe[0]);
+    close(my_pipe[1]);
+  }
+  else
+  {
+    dup2(my_pipe[0], 0);
+    close(my_pipe[0]);
+    close(my_pipe[1]);
+  }
+}
+
+void Pipe::revert()
+{
+  if (is_father)
+  {
+    close(1);
+    dup(stdout);
+    close(stdout);
+  }
 }

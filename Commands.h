@@ -62,8 +62,15 @@ public:
   void config() override;
 };
 
-class AppendToFile : public IO
+class Pipe : public IO
 {
+public:
+  int my_pipe[2];
+  int stdout;
+  int is_father;
+  Pipe();
+  void config() override;
+  void revert() override;
 };
 class IOFactory
 {
@@ -84,6 +91,10 @@ public:
 
     return nullptr;
   }
+  static IO *getPipe()
+  {
+    return new Pipe();
+  }
 };
 
 class Command
@@ -92,7 +103,7 @@ class Command
 public:
   char *args[COMMAND_MAX_ARGS];
   int numOfArgs;
-  IO *IOConfig;
+  IO *IOConfig = nullptr;
   Command() = default;
   Command(const char *cmd_line);
   virtual ~Command();
@@ -116,26 +127,6 @@ public:
   ExternalCommand(const char *cmd_line);
   virtual ~ExternalCommand() {}
   void execute() override;
-};
-
-class PipeCommand : public Command
-{
-  // TODO: Add your data members
-public:
-  PipeCommand(const char *cmd_line);
-  virtual ~PipeCommand() {}
-  void execute() override;
-};
-
-class RedirectionCommand : public Command
-{
-  // TODO: Add your data members
-public:
-  explicit RedirectionCommand(const char *cmd_line);
-  virtual ~RedirectionCommand() {}
-  void execute() override;
-  //void prepare() override;
-  //void cleanup() override;
 };
 
 class ChangeDirCommand : public BuiltInCommand
@@ -235,6 +226,15 @@ public:
   }
   ~SmallShell();
   void executeCommand(const char *cmd_line);
+  static void exec_util(Command *cmd)
+  {
+    if (cmd != nullptr)
+    {
+      cmd->prepare();
+      cmd->execute();
+      cmd->cleanup();
+    }
+  }
   // TODO: add extra methods as needed
 };
 
@@ -244,6 +244,17 @@ public:
   SmallShell *shell = nullptr;
   virtual ~ChangePromptCommand(){};
   ChangePromptCommand(const char *cmd_line, SmallShell *shell);
+  void execute() override;
+};
+
+class PipedCommands : public Command
+{
+  Command *cmd1 = nullptr;
+  Command *cmd2 = nullptr;
+
+public:
+  PipedCommands(const char *cmd_line, SmallShell *shell);
+  ~PipedCommands();
   void execute() override;
 };
 
