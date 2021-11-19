@@ -30,6 +30,13 @@ string _trim(const std::string &s)
   return _rtrim(_ltrim(s));
 }
 
+void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
+{
+  string cmd_s = string(cmd_line);
+  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
+  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+}
+
 int _parseCommandLine(const char *cmd_line, char **args)
 {
   FUNC_ENTRY()
@@ -76,7 +83,7 @@ void _removeBackgroundSign(char *cmd_line)
 
 int is_piped_command(string cmd_s)
 {
-  return cmd_s.find('|') != std::string::npos;
+  return cmd_s.find("|") != std::string::npos || cmd_s.find("|&") != std::string::npos;
 }
 
 // TODO: Add your implementation for classes in Commands.h
@@ -136,8 +143,7 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  if (IOConfig == nullptr)
-    IOConfig = IOFactory::getIO(args, numOfArgs);
+  IOConfig = IOFactory::getIO(args, numOfArgs);
 }
 
 void Command::prepare()
@@ -241,12 +247,24 @@ void WriteToFile::revert()
 
 PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
 {
-  string cmd_s = string(cmd_line);
-  const char *cmd_line1 = cmd_s.substr(0, cmd_s.find_first_of('|')).c_str();
-  const char *cmd_line2 = cmd_s.substr(cmd_s.find_first_of('|') + 1).c_str();
-  cmd1 = shell->CreateCommand(cmd_line1);
-  cmd2 = shell->CreateCommand(cmd_line2);
-  IOConfig = IOFactory::getPipe();
+  std::string cmd_line1;
+  std::string cmd_line2;
+  Pipe::PipeType type = Pipe::getPipeType(string(cmd_line));
+
+  switch (type)
+  {
+  case Pipe::STREAM_STDOUT:
+    _split(cmd_line, "|", cmd_line1, cmd_line2);
+    break;
+  case Pipe::STREAM_STDERR:
+    _split(cmd_line, "|&", cmd_line1, cmd_line2);
+  default:
+    break;
+  }
+
+  IOConfig = IOFactory::getPipe(type);
+  cmd1 = shell->CreateCommand(cmd_line1.c_str());
+  cmd2 = shell->CreateCommand(cmd_line2.c_str());
 }
 
 PipedCommands::~PipedCommands()
@@ -261,6 +279,7 @@ void PipedCommands::execute()
   if (PipeIO->is_father)
   {
     SmallShell::exec_util(cmd1);
+    wait(NULL);
   }
   else
   {
@@ -269,7 +288,7 @@ void PipedCommands::execute()
   }
 }
 
-Pipe::Pipe()
+Pipe::Pipe(PipeType type) : type(type)
 {
   pipe(my_pipe);
 }
@@ -279,8 +298,9 @@ void Pipe::config()
   is_father = fork() != 0;
   if (is_father)
   {
-    stdout = dup(1);
-    dup2(my_pipe[1], 1);
+    int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
+    std_target = dup(type);
+    dup2(my_pipe[1], target_fd);
     close(my_pipe[0]);
     close(my_pipe[1]);
   }
@@ -296,8 +316,8 @@ void Pipe::revert()
 {
   if (is_father)
   {
-    close(1);
-    dup(stdout);
-    close(stdout);
+    close(type);
+    dup(std_target);
+    close(std_target);
   }
 }

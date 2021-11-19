@@ -65,10 +65,29 @@ public:
 class Pipe : public IO
 {
 public:
+  enum PipeType
+  {
+    NO_PIPE_FOUND = 0,
+    STREAM_STDOUT = 1,
+    STREAM_STDERR = 2
+  };
+  PipeType type;
+  static Pipe::PipeType getPipeType(std::string cmd_s)
+  {
+    if (cmd_s.find("|&") != std::string::npos)
+    {
+      return Pipe::STREAM_STDERR;
+    }
+    else if (cmd_s.find("|") != std::string::npos)
+    {
+      return Pipe::STREAM_STDOUT;
+    }
+    return Pipe::NO_PIPE_FOUND;
+  }
   int my_pipe[2];
-  int stdout;
+  int std_target;
   int is_father;
-  Pipe();
+  Pipe(PipeType type);
   void config() override;
   void revert() override;
 };
@@ -91,9 +110,9 @@ public:
 
     return nullptr;
   }
-  static IO *getPipe()
+  static IO *getPipe(Pipe::PipeType type)
   {
-    return new Pipe();
+    return new Pipe(type);
   }
 };
 
