@@ -102,11 +102,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
 
   else if (firstWord.compare("pwd") == 0)
   {
-    return new GetCurrDirCommand();
+    return new GetCurrDirCommand(cmd_line);
   }
   else if (firstWord.compare("showpid") == 0)
   {
-    return new ShowPidCommand();
+    return new ShowPidCommand(cmd_line);
   }
 
   return nullptr;
@@ -118,8 +118,12 @@ void SmallShell::executeCommand(const char *cmd_line)
   // for example:
   Command *cmd = CreateCommand(cmd_line);
   if (cmd != nullptr)
+  {
+    cmd->prepare();
     cmd->execute();
-  // Please note that you must fork smash process for some commands (e.g., external commands....)
+    cmd->cleanup();
+    // Please note that you must fork smash process for some commands (e.g., external commands....)
+  }
 }
 
 void SmallShell::updateShellName(std::string name)
@@ -130,6 +134,23 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
+  IOConfig = IOFactory::getIO(args, numOfArgs);
+}
+
+void Command::prepare()
+{
+  if (IOConfig != nullptr)
+  {
+    IOConfig->config();
+  }
+}
+
+void Command::cleanup()
+{
+  if (IOConfig != nullptr)
+  {
+    IOConfig->revert();
+  }
 }
 
 Command::~Command()
@@ -159,6 +180,10 @@ void ChangePromptCommand::execute()
   this->shell->updateShellName(args[1]);
 }
 
+GetCurrDirCommand::GetCurrDirCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
+{
+}
+
 void GetCurrDirCommand::execute()
 {
   char cwd[PATH_MAX];
@@ -168,7 +193,34 @@ void GetCurrDirCommand::execute()
   }
 }
 
+ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
+{
+}
+
 void ShowPidCommand::execute()
 {
-  printf("smash pid is %d\n",getpid());
+  printf("smash pid is %d\n", getpid());
+}
+
+CreateOrOverWriteToFile::CreateOrOverWriteToFile(std::string filename) : IO()
+{
+  this->filename = filename;
+};
+
+void CreateOrOverWriteToFile::config()
+{
+  int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0666);
+  int stdout = dup(1);
+  close(1);
+  dup(fd);
+  this->fd = fd;
+  this->stdout = stdout;
+}
+
+void CreateOrOverWriteToFile::revert()
+{
+  close(1);
+  dup(stdout);
+  close(stdout);
+  close(fd);
 }

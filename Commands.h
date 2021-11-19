@@ -9,21 +9,65 @@
 #include <sstream>
 #include <sys/wait.h>
 #include <iomanip>
-#include <linux/limits.h>
+#include <limits.h>
+#include <fcntl.h>
 #include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
 
-#define DO_SYS(syscall)               \
-  do                                  \
-  {                                   \
-    /* safely invoke a system call */ \
-    if ((syscall) == -1)              \
-    {                                 \
-      thorw SysCallException(#syscall);               \
-    }                                 \
+#define DO_SYS(syscall)                 \
+  do                                    \
+  {                                     \
+    /* safely invoke a system call */   \
+    if ((syscall) == -1)                \
+    {                                   \
+      throw SysCallException(#syscall); \
+    }                                   \
   } while (0)
+
+class IO
+{
+public:
+  IO() = default;
+  ~IO() = default;
+  virtual void config() = 0;
+  virtual void revert() = 0;
+};
+
+class CreateOrOverWriteToFile : public IO
+{
+private:
+  std::string filename;
+  int fd;
+  int stdout;
+
+public:
+  CreateOrOverWriteToFile(std::string filename);
+  ~CreateOrOverWriteToFile() = default;
+  void config() override;
+  void revert() override;
+};
+
+class AppendToFile : public IO
+{
+};
+class IOFactory
+{
+  // TODO: Add your data members
+public:
+  IOFactory();
+  ~IOFactory();
+  static IO *getIO(char **args, int numOfArgs)
+  {
+    if (std::string(args[numOfArgs - 2]) == ">")
+    {
+      return new CreateOrOverWriteToFile(args[numOfArgs - 1]);
+    }
+
+    return nullptr;
+  }
+};
 
 class Command
 {
@@ -31,12 +75,13 @@ class Command
 public:
   char *args[COMMAND_MAX_ARGS];
   int numOfArgs;
+  IO *IOConfig;
   Command() = default;
   Command(const char *cmd_line);
   virtual ~Command();
   virtual void execute() = 0;
-  //virtual void prepare();
-  //virtual void cleanup();
+  virtual void prepare();
+  virtual void cleanup();
   // TODO: Add your extra methods if needed
 };
 
@@ -87,6 +132,7 @@ class ChangeDirCommand : public BuiltInCommand
 class GetCurrDirCommand : public BuiltInCommand
 {
 public:
+  GetCurrDirCommand(const char *cmd_line);
   virtual ~GetCurrDirCommand() {}
   void execute() override;
 };
@@ -94,7 +140,7 @@ public:
 class ShowPidCommand : public BuiltInCommand
 {
 public:
-  ShowPidCommand() {}
+  ShowPidCommand(const char *cmd_line);
   virtual ~ShowPidCommand() {}
   void execute() override;
 };
@@ -106,28 +152,6 @@ class QuitCommand : public BuiltInCommand
   QuitCommand(const char *cmd_line, JobsList *jobs);
   virtual ~QuitCommand() {}
   void execute() override;
-};
-
-class JobsList
-{
-public:
-  class JobEntry
-  {
-    // TODO: Add your data members
-  };
-  // TODO: Add your data members
-public:
-  JobsList();
-  ~JobsList();
-  void addJob(Command *cmd, bool isStopped = false);
-  void printJobsList();
-  void killAllJobs();
-  void removeFinishedJobs();
-  JobEntry *getJobById(int jobId);
-  void removeJobById(int jobId);
-  JobEntry *getLastJob(int *lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
-  // TODO: Add extra methods or modify exisitng ones as needed
 };
 
 class JobsCommand : public BuiltInCommand
