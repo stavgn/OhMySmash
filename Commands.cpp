@@ -95,6 +95,7 @@ SmallShell::SmallShell(std::string name)
 
 SmallShell::~SmallShell()
 {
+  free(old_pwd);
   // TODO: add your implementation
 }
 
@@ -122,6 +123,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   else if (firstWord.compare("showpid") == 0)
   {
     return new ShowPidCommand(cmd_line);
+  }
+  else if (firstWord.compare("cd") == 0)
+  {
+    return new ChangeDirCommand(cmd_line, &old_pwd);
   }
 
   return nullptr;
@@ -213,6 +218,50 @@ ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
 void ShowPidCommand::execute()
 {
   printf("smash pid is %d\n", getpid());
+}
+ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **last_pwd) : BuiltInCommand(cmd_line)
+{
+  old_pwd = last_pwd;
+}
+
+void ChangeDirCommand::execute()
+{
+  if (numOfArgs > 2)
+  {
+    throw(Exception("cd: too many arguments"));
+  }
+  std::string arg(args[1]);
+  std::string new_path;
+  if (arg.compare("-") == 0)
+  {
+    if (*old_pwd == nullptr)
+    {
+      throw(Exception("cd: OLDPWD not set"));
+    }
+    else
+    {
+      new_path = string(*old_pwd);
+    }
+  }
+  else
+  {
+    new_path = arg;
+  }
+
+  if (*old_pwd == nullptr) // first use of cd
+  {
+    *old_pwd = (char *)malloc(PATH_MAX);
+  }
+
+  if (getcwd(*old_pwd, PATH_MAX) == NULL) // update old_pwd
+  {
+    throw(SysCallException(std::string("getcwd")));
+  }
+
+  if (chdir(new_path.c_str()) < 0)
+  {
+    throw(SysCallException("chdir"));
+  }
 }
 
 WriteToFile::WriteToFile(std::string filename) : IO()

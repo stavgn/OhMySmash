@@ -151,7 +151,9 @@ public:
 class ChangeDirCommand : public BuiltInCommand
 {
   // TODO: Add your data members public:
-  ChangeDirCommand(const char *cmd_line, char **plastPwd);
+public:
+  char **old_pwd = nullptr;
+  ChangeDirCommand(const char *cmd_line, char** last_pwd);
   virtual ~ChangeDirCommand() {}
   void execute() override;
 };
@@ -232,6 +234,7 @@ private:
 
 public:
   std::string name;
+  char *old_pwd = nullptr;
   void updateShellName(std::string name);
   Command *CreateCommand(const char *cmd_line);
   SmallShell(std::string name);

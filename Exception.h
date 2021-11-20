@@ -15,7 +15,11 @@ protected:
 public:
     Exception() = default;
     Exception(std::string msg) : err_msg(msg) {}
-    virtual void handle() {}
+    virtual void handle() 
+    {
+        std::string msg = "smash error: " + err_msg;
+        std::cerr << msg.c_str() << '\n';
+    }
 };
 
 class SysCallException : public Exception
