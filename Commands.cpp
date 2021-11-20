@@ -200,6 +200,10 @@ void GetCurrDirCommand::execute()
   {
     cout << cwd << "\n";
   }
+  else
+  {
+    throw(SysCallException(std::string("getcwd")));
+  }
 }
 
 ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line)

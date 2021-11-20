@@ -8,22 +8,23 @@
 
 class Exception : public std::exception
 {
-    Exception() = default;
-    Exception(std::string msg) : msg(msg) {}
 
 protected:
-    std::string msg;
+    std::string err_msg;
 
 public:
+    Exception() = default;
+    Exception(std::string msg) : err_msg(msg) {}
     virtual void handle() {}
 };
 
 class SysCallException : public Exception
 {
 public:
+    SysCallException(std::string msg) : Exception(msg) {}
     void handle() override
     {
-        msg = "smash error: " + msg + "failed";
+        std::string msg = "smash error: " + err_msg + " failed";
         perror(msg.c_str());
     }
 };
