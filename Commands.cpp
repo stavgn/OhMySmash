@@ -128,6 +128,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new ChangeDirCommand(cmd_line, &old_pwd);
   }
+  else if (firstWord.compare("head") == 0)
+  {
+    return new HeadCommand(cmd_line);
+  }
 
   return nullptr;
 }
@@ -262,6 +266,53 @@ void ChangeDirCommand::execute()
   {
     throw(SysCallException("chdir"));
   }
+}
+
+HeadCommand::HeadCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
+{
+}
+
+void HeadCommand::execute()
+{
+  int path_arg = 1;
+  if (numOfArgs < 2)
+  {
+    throw(Exception("head: not enough argmuments"));
+  }
+  if ((numOfArgs >= 3) && (args[1][0] == '-'))
+  {
+    N = stoi(string(args[1] + 1)); // Takes -N and, cuts the '-' and convert to int
+    path_arg = 2;
+  }
+  fstream file;
+  file.open(args[path_arg], fstream::in);
+  if (file.fail() == 1)
+  {
+    throw(SysCallException("open"));
+  }
+  string line;
+
+  for (int i = 0; (i < N) && (!file.eof()); i++)
+  {
+    getline(file, line);
+    if (file.bad() == 1)
+    {
+      throw(SysCallException("read"));
+    }
+    if (file.eof())
+    {
+      cout << line;
+    }
+    else {
+      cout << line << endl;
+    }
+    if (cout.bad())
+    {
+      throw(SysCallException("write"));
+    }
+   
+  }
+  file.close();
 }
 
 WriteToFile::WriteToFile(std::string filename) : IO()

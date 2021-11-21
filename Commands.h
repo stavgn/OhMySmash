@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <sstream>
 #include <sys/wait.h>
@@ -222,6 +223,7 @@ public:
 class HeadCommand : public BuiltInCommand
 {
 public:
+  int N = 10;
   HeadCommand(const char *cmd_line);
   virtual ~HeadCommand() {}
   void execute() override;
