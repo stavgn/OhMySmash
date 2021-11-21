@@ -12,8 +12,9 @@
 #include <iomanip>
 #include <limits.h>
 #include <fcntl.h>
-#include "Exception.h"
 #include <map>
+#include <time.h>
+#include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
@@ -192,22 +193,27 @@ public:
   Command *cmd;
   JobStatus status;
   time_t time;
-};
-struct JobsCompare
-{
-  bool operator()(const JobEntry &j1, const JobEntry &j2)
+
+  bool operator<(const JobEntry &job2)
   {
-    return j1.jid > j2.jid;
+    return this->jid < job2.jid;
   }
 };
+// struct JobsCompare
+// {
+//   bool operator()(const JobEntry &j1, const JobEntry &j2)
+//   {
+//     return j1.jid > j2.jid;
+//   }
+// };
 
 class JobsList
 {
 public:
-  std::map<int, JobEntry, JobsCompare> jobsList;
+  std::map<int, JobEntry> jobsList;
   JobsList();
   ~JobsList();
-  void addJob(Command *cmd, bool isStopped = false);
+  void addJob(JobEntry job);
   void printJobsList();
   void killAllJobs();
   void removeFinishedJobs();

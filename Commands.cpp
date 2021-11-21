@@ -443,3 +443,25 @@ Pipe::~Pipe()
   if (!reverted)
     revert();
 }
+
+void JobsList::addJob(JobEntry job)
+{
+  jobsList[job.jid] = job;
+}
+
+void JobsList::printJobsList()
+{
+  for(auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
+  {
+    JobEntry cur_job = i->second;
+    cout << "[" << cur_job.jid << "] ";
+    cout << cur_job.cmd << " : ";
+    cout << cur_job.pid << " ";
+    cout << difftime(time(NULL),cur_job.time);
+    if (cur_job.status == JobEntry::STOPPED)
+    {
+      cout << " (stopped)";
+    }
+    cout << endl;
+  }
+}
