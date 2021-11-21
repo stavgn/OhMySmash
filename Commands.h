@@ -13,7 +13,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include "Exception.h"
-#include <set>
+#include <map>
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
@@ -204,7 +204,7 @@ struct JobsCompare
 class JobsList
 {
 public:
-  std::set<JobEntry, JobsCompare> jobsList;
+  std::map<int, JobEntry, JobsCompare> jobsList;
   JobsList();
   ~JobsList();
   void addJob(Command *cmd, bool isStopped = false);
