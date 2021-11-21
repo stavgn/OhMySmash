@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include "Exception.h"
+#include <set>
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define WHITESPACE " \t\n\r\f\v"
@@ -177,7 +178,45 @@ public:
   void execute() override;
 };
 
-class JobsList;
+class JobEntry
+{
+public:
+  enum JobStatus
+  {
+    STOPPED = 0,
+    FOREGROUND = 1,
+    BACKGROUND = 2
+  };
+  int jid;
+  pid_t pid;
+  Command *cmd;
+  JobStatus status;
+  time_t time;
+};
+struct JobsCompare
+{
+  bool operator()(const JobEntry &j1, const JobEntry &j2)
+  {
+    return j1.jid > j2.jid;
+  }
+};
+
+class JobsList
+{
+public:
+  std::set<JobEntry, JobsCompare> jobsList;
+  JobsList();
+  ~JobsList();
+  void addJob(Command *cmd, bool isStopped = false);
+  void printJobsList();
+  void killAllJobs();
+  void removeFinishedJobs();
+  JobEntry *getJobById(int jobId);
+  void removeJobById(int jobId);
+  JobEntry *getLastJob(int *lastJobId);
+  JobEntry *getLastStoppedJob(int *jobId);
+  // TODO: Add extra methods or modify exisitng ones as needed
+};
 class QuitCommand : public BuiltInCommand
 {
   // TODO: Add your data members public:
