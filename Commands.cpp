@@ -305,7 +305,7 @@ void HeadCommand::execute()
     }
     if (file.eof())
     {
-      cout << line;
+      cout << line << flush;
     }
     else {
       cout << line << endl;
