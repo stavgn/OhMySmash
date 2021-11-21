@@ -414,6 +414,7 @@ void Pipe::config()
   }
   else
   {
+    setpgrp();
     dup2(my_pipe[0], 0);
     close(my_pipe[0]);
     close(my_pipe[1]);
