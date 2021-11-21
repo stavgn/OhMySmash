@@ -148,7 +148,11 @@ public:
 class ExternalCommand : public Command
 {
 public:
-  ExternalCommand(const char *cmd_line);
+  JobEntry job;
+  SmallShell *shell;
+  bool is_father;
+  bool is_fg;
+  ExternalCommand(const char *cmd_line, SmallShell *shell);
   virtual ~ExternalCommand() {}
   void execute() override;
 };
@@ -199,13 +203,7 @@ public:
     return this->jid < job2.jid;
   }
 };
-// struct JobsCompare
-// {
-//   bool operator()(const JobEntry &j1, const JobEntry &j2)
-//   {
-//     return j1.jid > j2.jid;
-//   }
-// };
+
 
 class JobsList
 {
@@ -284,6 +282,7 @@ private:
 public:
   std::string name;
   char *old_pwd = nullptr;
+  JobsList jobList;
   void updateShellName(std::string name);
   Command *CreateCommand(const char *cmd_line);
   SmallShell(std::string name);

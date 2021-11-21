@@ -446,22 +446,76 @@ Pipe::~Pipe()
 
 void JobsList::addJob(JobEntry job)
 {
+  JobEntry max_job = jobsList.rbegin()->second;
+  job.jid = max_job.jid;
+  job.time = time(NULL);
   jobsList[job.jid] = job;
 }
 
 void JobsList::printJobsList()
 {
-  for(auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
+  for (auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
   {
     JobEntry cur_job = i->second;
     cout << "[" << cur_job.jid << "] ";
     cout << cur_job.cmd << " : ";
     cout << cur_job.pid << " ";
-    cout << difftime(time(NULL),cur_job.time);
+    cout << difftime(time(NULL), cur_job.time);
     if (cur_job.status == JobEntry::STOPPED)
     {
       cout << " (stopped)";
     }
     cout << endl;
   }
+}
+
+ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
+{
+  this->shell = shell;
+  if (_isBackgroundComamnd(cmd_line))
+  {
+    is_fg = false;
+    job.status = JobEntry::BACKGROUND;
+  }
+  else
+  {
+    is_fg = true;
+    job.status = JobEntry::FOREGROUND;
+  }
+
+  pid_t pid = fork();
+  if (pid < 0)
+  {
+    throw SysCallException("fork");
+  }
+  else if (pid == 0)
+  {
+    is_father = false;
+  }
+  else
+  {
+    is_father = true;
+    job.pid = pid;
+  }
+}
+
+void ExternalCommand::execute()
+{
+  if (is_father)
+  {
+    if (is_fg)
+    {
+      wait(NULL);
+    }
+    else
+    {
+      shell->jobList.addJob(job);
+    }
+    return;
+  }
+  //// need to be fixed!!
+
+  // in case of child
+  string exe_args = "-c \"" + cmd_line 
+   execv("/bin/bash")
 }
