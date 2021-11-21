@@ -32,6 +32,7 @@ class IO
 public:
   IO() = default;
   ~IO() = default;
+  int reverted = 0;
   virtual void config() = 0;
   virtual void revert() = 0;
 };
@@ -43,7 +44,7 @@ protected:
   int fd;
   int stdout;
   WriteToFile(std::string filename);
-  ~WriteToFile() = default;
+  ~WriteToFile();
   void revert() override;
 };
 
@@ -89,6 +90,7 @@ public:
   int std_target;
   int is_father;
   Pipe(PipeType type);
+  ~Pipe();
   void config() override;
   void revert() override;
 };
@@ -154,7 +156,7 @@ class ChangeDirCommand : public BuiltInCommand
   // TODO: Add your data members public:
 public:
   char **old_pwd = nullptr;
-  ChangeDirCommand(const char *cmd_line, char** last_pwd);
+  ChangeDirCommand(const char *cmd_line, char **last_pwd);
   virtual ~ChangeDirCommand() {}
   void execute() override;
 };

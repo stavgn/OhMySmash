@@ -307,14 +307,14 @@ void HeadCommand::execute()
     {
       cout << line << flush;
     }
-    else {
+    else
+    {
       cout << line << endl;
     }
     if (cout.bad())
     {
       throw(SysCallException("write"));
     }
-   
   }
   file.close();
 }
@@ -351,6 +351,7 @@ void WriteToFile::revert()
   dup(stdout);
   close(stdout);
   close(fd);
+  reverted = 1;
 }
 
 PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
@@ -429,4 +430,16 @@ void Pipe::revert()
     dup(std_target);
     close(std_target);
   }
+  reverted = 1;
+}
+
+WriteToFile::~WriteToFile()
+{
+  if (!reverted)
+    revert();
+}
+Pipe::~Pipe()
+{
+  if (!reverted)
+    revert();
 }
