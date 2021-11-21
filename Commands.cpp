@@ -230,6 +230,10 @@ ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **last_pwd) : Buil
 
 void ChangeDirCommand::execute()
 {
+  if (numOfArgs == 1)
+  {
+    return;
+  }
   if (numOfArgs > 2)
   {
     throw(Exception("cd: too many arguments"));
