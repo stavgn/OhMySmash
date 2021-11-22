@@ -446,8 +446,15 @@ Pipe::~Pipe()
 
 void JobsList::addJob(JobEntry job)
 {
-  JobEntry max_job = jobsList.rbegin()->second;
-  job.jid = max_job.jid;
+  if (jobsList.empty())
+  {
+    job.jid = 1;
+  }
+  else
+  {
+    JobEntry max_job = jobsList.rbegin()->second;
+    job.jid = max_job.jid + 1;
+  }
   job.time = time(NULL);
   jobsList[job.jid] = job;
 }
@@ -505,7 +512,7 @@ void ExternalCommand::execute()
   {
     if (is_fg)
     {
-      wait(NULL);
+      waitpid(job.pid, NULL);
     }
     else
     {
@@ -516,6 +523,6 @@ void ExternalCommand::execute()
   //// need to be fixed!!
 
   // in case of child
-  string exe_args = "-c \"" + cmd_line 
-   execv("/bin/bash")
+  string exe_args = "-c \"" + cmd_line
+                                  execv("/bin/bash")
 }
