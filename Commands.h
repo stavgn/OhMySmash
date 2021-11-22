@@ -13,7 +13,8 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <map>
-#include <time.h>
+#include <stack>
+#include <signal.h>
 #include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -211,7 +212,7 @@ class JobsList
 {
 public:
   std::map<int, JobEntry> jobsList;
-  JobsList();
+  int last_jit_stopped;
   ~JobsList();
   void addJob(JobEntry job);
   void printJobsList();
@@ -219,8 +220,8 @@ public:
   void removeFinishedJobs();
   JobEntry *getJobById(int jobId);
   void removeJobById(int jobId);
-  JobEntry *getLastJob(int *lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
+  JobEntry *getLastJob();
+  JobEntry *getLastStoppedJob();
   // TODO: Add extra methods or modify exisitng ones as needed
 };
 class QuitCommand : public BuiltInCommand

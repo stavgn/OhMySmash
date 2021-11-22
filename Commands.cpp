@@ -451,17 +451,67 @@ void JobsList::addJob(JobEntry job)
 
 void JobsList::printJobsList()
 {
-  for(auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
+  for (auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
   {
     JobEntry cur_job = i->second;
     cout << "[" << cur_job.jid << "] ";
     cout << cur_job.cmd << " : ";
     cout << cur_job.pid << " ";
-    cout << difftime(time(NULL),cur_job.time);
+    cout << difftime(time(NULL), cur_job.time);
     if (cur_job.status == JobEntry::STOPPED)
     {
       cout << " (stopped)";
     }
     cout << endl;
+  }
+}
+
+JobEntry *JobsList::getLastStoppedJob()
+{
+  return &jobsList[last_jit_stopped];
+}
+JobEntry *JobsList::getLastJob()
+{
+  std::map<int, JobEntry>::iterator it = jobsList.rbegin();
+  return &it->second;
+}
+
+void JobsList::removeJobById(int jobId)
+{
+  jobsList.erase(jobId);
+}
+
+JobEntry *JobsList::getJobById(int jobId)
+{
+  return &jobsList[jobId];
+}
+
+void JobsList::removeFinishedJobs()
+{
+  std::stack<int> to_be_deleted;
+  std::map<int, JobEntry>::iterator it;
+  for (it = jobsList.begin(); it != jobsList.end(); ++it)
+  {
+    if (it->second.status == JobEntry::STOPPED)
+    {
+      to_be_deleted.push(it->second.jid);
+    }
+  }
+
+  while (!to_be_deleted.empty())
+  {
+    int jip = to_be_deleted.top();
+    jobsList.erase(jip);
+    to_be_deleted.pop();
+  }
+}
+
+void JobsList::killAllJobs()
+{
+  std::stack<int> to_be_killed;
+  std::map<int, JobEntry>::iterator it;
+  for (it = jobsList.begin(); it != jobsList.end(); ++it)
+  {
+    kill(it->second.pid, 9);
   }
 }
