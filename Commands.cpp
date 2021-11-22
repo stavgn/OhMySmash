@@ -518,7 +518,7 @@ void ExternalCommand::execute()
 
   // in case of child
   string exe_args = "-c \"" + string(cmd_line);
-  //execv("/bin/bash");
+  execv("/bin/bash");
 }
 
 JobEntry *JobsList::getLastStoppedJob()
