@@ -187,6 +187,7 @@ public:
   JobStatus status;
   time_t time;
 
+  static bool is_alive(pid_t pid);
   bool operator<(const JobEntry &job2)
   {
     return this->jid < job2.jid;
@@ -330,6 +331,6 @@ public:
   void execute() override;
 };
 
-bool is_alive(pid_t pid);
+
 
 #endif //SMASH_COMMAND_H_

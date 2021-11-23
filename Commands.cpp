@@ -550,7 +550,7 @@ JobEntry *JobsList::getJobById(int jobId)
   return &jobsList[jobId];
 }
 
-bool is_alive(pid_t pid)
+bool JobEntry::is_alive(pid_t pid)
 {
   pid_t result = waitpid(pid, NULL, WNOHANG);
   if (result == 0)
