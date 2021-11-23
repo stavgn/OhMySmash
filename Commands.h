@@ -330,4 +330,6 @@ public:
   void execute() override;
 };
 
+bool is_alive(pid_t pid);
+
 #endif //SMASH_COMMAND_H_

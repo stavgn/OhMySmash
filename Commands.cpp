@@ -550,14 +550,29 @@ JobEntry *JobsList::getJobById(int jobId)
   return &jobsList[jobId];
 }
 
+bool is_alive(pid_t pid)
+{
+  pid_t result = waitpid(pid, NULL, WNOHANG);
+  if (result == 0)
+  {
+    return true;
+  }
+  else if (result == -1)
+  {
+    throw SysCallException("waitpid");
+  }
+  return false;
+}
+
 void JobsList::removeFinishedJobs()
 {
   std::stack<int> to_be_deleted;
   std::map<int, JobEntry>::iterator it;
   for (it = jobsList.begin(); it != jobsList.end(); ++it)
   {
-    if (it->second.status == JobEntry::STOPPED)
+    if (!is_alive(it->second.pid))
     {
+
       to_be_deleted.push(it->second.jid);
     }
   }
