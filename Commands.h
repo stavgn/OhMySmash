@@ -264,6 +264,8 @@ public:
   void execute() override;
 };
 
+class ExternalCommand;
+
 class SmallShell
 {
 private:
@@ -273,6 +275,7 @@ public:
   std::string name;
   char *old_pwd = nullptr;
   JobsList jobList;
+  ExternalCommand *current_command = nullptr;
   void updateShellName(std::string name);
   Command *CreateCommand(const char *cmd_line);
   SmallShell(std::string name);
@@ -318,6 +321,7 @@ public:
   void execute() override;
 };
 
+
 class ExternalCommand : public Command
 {
 public:
@@ -330,7 +334,6 @@ public:
   virtual ~ExternalCommand() {}
   void execute() override;
 };
-
 
 
 #endif //SMASH_COMMAND_H_

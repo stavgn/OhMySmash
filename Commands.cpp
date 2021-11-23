@@ -490,6 +490,7 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
 {
   this->shell = shell;
   this->cmd_line = cmd_line;
+  shell->current_command = this;
   if (_isBackgroundComamnd(cmd_line))
   {
     is_fg = false;
@@ -508,6 +509,7 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
   }
   else if (pid == 0)
   {
+    setpgrp();
     is_father = false;
   }
   else
