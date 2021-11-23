@@ -133,6 +133,13 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new HeadCommand(cmd_line);
   }
+  else if (strlen(cmd_line) == 0)
+  {
+    return nullptr;
+  }
+  else{
+    return new ExternalCommand(cmd_line,this);
+  }
 
   return nullptr;
 }
@@ -527,12 +534,12 @@ void ExternalCommand::execute()
   //// need to be fixed!!
 
   // in case of child
- 
-  string execline = string("-c ") +  (_removeBackgroundSign(cmd_line));
-  execl("/bin/bash",execline.c_str());
+  string bash_pth("/bin/bash");
+  string bash_flag("-c");
+  string execline =  _removeBackgroundSign(cmd_line) ;
+  string args = bash_flag + execline;
+  execl(bash_pth.c_str(),bash_pth.c_str(),bash_flag.c_str(),execline.c_str(),(char*)NULL);
   throw SysCallException("exec");
-
-
 }
 
 JobEntry *JobsList::getLastStoppedJob()
