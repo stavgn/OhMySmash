@@ -446,6 +446,7 @@ Pipe::~Pipe()
 
 void JobsList::addJob(JobEntry job)
 {
+  removeFinishedJobs();
   if (jobsList.empty())
   {
     job.jid = 1;
@@ -461,6 +462,7 @@ void JobsList::addJob(JobEntry job)
 
 void JobsList::printJobsList()
 {
+  removeFinishedJobs();
   for (auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
   {
     JobEntry cur_job = i->second;

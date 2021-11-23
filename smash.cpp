@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     {
         try
         {
+            smash.jobList.removeFinishedJobs();
             std::cout << smash.name;
             std::string cmd_line;
             std::getline(std::cin, cmd_line);
