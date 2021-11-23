@@ -184,6 +184,7 @@ public:
   int jid;
   pid_t pid;
   Command *cmd;
+  std::string cmd_line;
   JobStatus status;
   time_t time;
 
@@ -223,7 +224,8 @@ class JobsCommand : public BuiltInCommand
 {
   // TODO: Add your data members
 public:
-  JobsCommand(const char *cmd_line, JobsList *jobs);
+  JobsList *jobList;
+  JobsCommand(const char *cmd_line, JobsList *jobs) : jobList(jobs) {}
   virtual ~JobsCommand() {}
   void execute() override;
 };

@@ -133,6 +133,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new HeadCommand(cmd_line);
   }
+  else if (firstWord.compare("jobs") == 0)
+  {
+    return new JobsCommand(cmd_line,&jobList);
+  }
   else if (strlen(cmd_line) == 0)
   {
     return nullptr;
@@ -327,6 +331,11 @@ void HeadCommand::execute()
   file.close();
 }
 
+void JobsCommand::execute()
+{
+  jobList->printJobsList();
+}
+
 WriteToFile::WriteToFile(std::string filename) : IO()
 {
   this->filename = filename;
@@ -475,7 +484,7 @@ void JobsList::printJobsList()
   {
     JobEntry cur_job = i->second;
     cout << "[" << cur_job.jid << "] ";
-    cout << cur_job.cmd << " : ";
+    cout << cur_job.cmd_line << " : ";
     cout << cur_job.pid << " ";
     cout << difftime(time(NULL), cur_job.time);
     if (cur_job.status == JobEntry::STOPPED)
@@ -491,6 +500,7 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
   this->shell = shell;
   this->cmd_line = cmd_line;
   shell->current_command = this;
+  job.cmd_line = string(cmd_line);
   if (_isBackgroundComamnd(cmd_line))
   {
     is_fg = false;
@@ -526,6 +536,7 @@ void ExternalCommand::execute()
     if (is_fg)
     {
       waitpid(job.pid, NULL,WSTOPPED);
+      is_fg = false;
     }
     else
     {

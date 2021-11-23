@@ -19,8 +19,9 @@ void ctrlZHandler(int sig_num)
   {
     DO_SYS(kill(current_cmd.job.pid,SIGSTOP));
     current_cmd.job.status = JobEntry::STOPPED;
+    current_cmd.is_fg = false;
     smash.jobList.addJob(current_cmd.job);
-    printf("smash: process %d was stopped",(int)current_cmd.job.pid);
+    printf("smash: process %d was stopped\n",(int)current_cmd.job.pid);
   }
 }
 
