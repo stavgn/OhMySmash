@@ -60,25 +60,26 @@ bool _isBackgroundComamnd(const char *cmd_line)
   return str[str.find_last_not_of(WHITESPACE)] == '&';
 }
 
-void _removeBackgroundSign(char *cmd_line)
+string _removeBackgroundSign(const char *cmd_line)
 {
-  const string str(cmd_line);
+   string str(cmd_line);
   // find last character other than spaces
   unsigned int idx = str.find_last_not_of(WHITESPACE);
   // if all characters are spaces then return
   if (idx == string::npos)
   {
-    return;
+    return str;
   }
   // if the command line does not end with & then return
   if (cmd_line[idx] != '&')
   {
-    return;
+    return str;
   }
   // replace the & (background sign) with space and then remove all tailing spaces.
-  cmd_line[idx] = ' ';
+  str[idx] = ' ';
   // truncate the command line string up to the last non-space character
-  cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
+  str[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
+  return str;
 }
 
 int is_piped_command(string cmd_s)
@@ -515,7 +516,7 @@ void ExternalCommand::execute()
   {
     if (is_fg)
     {
-      waitpid(job.pid, NULL);
+      waitpid(job.pid, NULL,WSTOPPED);
     }
     else
     {
@@ -526,8 +527,12 @@ void ExternalCommand::execute()
   //// need to be fixed!!
 
   // in case of child
-  string exe_args = "-c \"" + string(cmd_line);
-  execv("/bin/bash");
+ 
+  string execline = string("-c ") +  (_removeBackgroundSign(cmd_line));
+  execl("/bin/bash",execline.c_str());
+  throw SysCallException("exec");
+
+
 }
 
 JobEntry *JobsList::getLastStoppedJob()
@@ -570,7 +575,7 @@ void JobsList::removeFinishedJobs()
   std::map<int, JobEntry>::iterator it;
   for (it = jobsList.begin(); it != jobsList.end(); ++it)
   {
-    if (!is_alive(it->second.pid))
+    if (!JobEntry::is_alive(it->second.pid))
     {
 
       to_be_deleted.push(it->second.jid);
