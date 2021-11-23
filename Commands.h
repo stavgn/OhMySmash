@@ -13,7 +13,8 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <map>
-#include <time.h>
+#include <stack>
+#include <signal.h>
 #include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -145,18 +146,6 @@ public:
   virtual ~BuiltInCommand() = default;
 };
 
-class ExternalCommand : public Command
-{
-public:
-  JobEntry job;
-  SmallShell *shell;
-  bool is_father;
-  bool is_fg;
-  ExternalCommand(const char *cmd_line, SmallShell *shell);
-  virtual ~ExternalCommand() {}
-  void execute() override;
-};
-
 class ChangeDirCommand : public BuiltInCommand
 {
   // TODO: Add your data members public:
@@ -204,21 +193,21 @@ public:
   }
 };
 
-
 class JobsList
 {
 public:
   std::map<int, JobEntry> jobsList;
-  JobsList();
-  ~JobsList();
+  int last_jit_stopped;
+  JobsList() = default;
+  ~JobsList() = default;
   void addJob(JobEntry job);
   void printJobsList();
   void killAllJobs();
   void removeFinishedJobs();
   JobEntry *getJobById(int jobId);
   void removeJobById(int jobId);
-  JobEntry *getLastJob(int *lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
+  JobEntry *getLastJob();
+  JobEntry *getLastStoppedJob();
   // TODO: Add extra methods or modify exisitng ones as needed
 };
 class QuitCommand : public BuiltInCommand
@@ -325,6 +314,19 @@ class PipedCommands : public Command
 public:
   PipedCommands(const char *cmd_line, SmallShell *shell);
   ~PipedCommands();
+  void execute() override;
+};
+
+class ExternalCommand : public Command
+{
+public:
+  JobEntry job;
+  SmallShell *shell;
+  const char *cmd_line;
+  bool is_father;
+  bool is_fg;
+  ExternalCommand(const char *cmd_line, SmallShell *shell);
+  virtual ~ExternalCommand() {}
   void execute() override;
 };
 
