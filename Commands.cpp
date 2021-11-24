@@ -54,7 +54,7 @@ int _parseCommandLine(const char *cmd_line, char **args)
   FUNC_EXIT()
 }
 
-bool _isBackgroundComamnd(const char *cmd_line)
+bool _isBackgroundCommand(const char *cmd_line)
 {
   const string str(cmd_line);
   return str[str.find_last_not_of(WHITESPACE)] == '&';
@@ -62,7 +62,7 @@ bool _isBackgroundComamnd(const char *cmd_line)
 
 string _removeBackgroundSign(const char *cmd_line)
 {
-   string str(cmd_line);
+  string str(cmd_line);
   // find last character other than spaces
   unsigned int idx = str.find_last_not_of(WHITESPACE);
   // if all characters are spaces then return
@@ -87,6 +87,15 @@ int is_piped_command(string cmd_s)
   return cmd_s.find("|") != std::string::npos || cmd_s.find("|&") != std::string::npos;
 }
 
+bool _is_a_number(const char *c)
+{
+  std::string s = string(c);
+  return std::find_if(s.begin() + 1, s.end(),
+                      [](unsigned char c)
+                      {
+                        return !std::isdigit(c);
+                      }) == s.end();
+}
 // TODO: Add your implementation for classes in Commands.h
 
 SmallShell::SmallShell(std::string name)
@@ -135,14 +144,31 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   }
   else if (firstWord.compare("jobs") == 0)
   {
-    return new JobsCommand(cmd_line,&jobList);
+    return new JobsCommand(cmd_line, &jobList);
   }
   else if (strlen(cmd_line) == 0)
   {
     return nullptr;
   }
-  else{
-    return new ExternalCommand(cmd_line,this);
+  else if (firstWord.compare("kill") == 0)
+  {
+    return new KillCommand(cmd_line, &jobList);
+  }
+  else if (firstWord.compare("fg") == 0)
+  {
+    return new ForegroundCommand(cmd_line, &jobList);
+  }
+  else if (firstWord.compare("bg") == 0)
+  {
+    return new BackgroundCommand(cmd_line, &jobList);
+  }
+  else if (firstWord.compare("quit") == 0)
+  {
+    return new QuitCommand(cmd_line, &jobList);
+  }
+  else
+  {
+    return new ExternalCommand(cmd_line, this);
   }
 
   return nullptr;
@@ -495,13 +521,24 @@ void JobsList::printJobsList()
   }
 }
 
+void JobsList::printJobsList2()
+{
+  for (auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
+  {
+    JobEntry cur_job = i->second;
+    cout << cur_job.jid << " : ";
+    cout << cur_job.cmd_line;
+    cout << endl;
+  }
+}
+
 ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
 {
   this->shell = shell;
   this->cmd_line = cmd_line;
   shell->current_command = this;
   job.cmd_line = string(cmd_line);
-  if (_isBackgroundComamnd(cmd_line))
+  if (_isBackgroundCommand(cmd_line))
   {
     is_fg = false;
     job.status = JobEntry::BACKGROUND;
@@ -535,7 +572,7 @@ void ExternalCommand::execute()
   {
     if (is_fg)
     {
-      waitpid(job.pid, NULL,WSTOPPED);
+      waitpid(job.pid, NULL, WSTOPPED);
       is_fg = false;
     }
     else
@@ -549,9 +586,9 @@ void ExternalCommand::execute()
   // in case of child
   string bash_pth("/bin/bash");
   string bash_flag("-c");
-  string execline =  _removeBackgroundSign(cmd_line) ;
+  string execline = _removeBackgroundSign(cmd_line);
   string args = bash_flag + execline;
-  execl(bash_pth.c_str(),bash_pth.c_str(),bash_flag.c_str(),execline.c_str(),(char*)NULL);
+  execl(bash_pth.c_str(), bash_pth.c_str(), bash_flag.c_str(), execline.c_str(), (char *)NULL);
   throw SysCallException("exec");
 }
 
@@ -562,7 +599,7 @@ JobEntry *JobsList::getLastStoppedJob()
 JobEntry *JobsList::getLastJob()
 {
   auto it = jobsList.rbegin();
-  return &it->second;
+  return jobsList.empty() ? nullptr : &it->second;
 }
 
 void JobsList::removeJobById(int jobId)
@@ -572,7 +609,9 @@ void JobsList::removeJobById(int jobId)
 
 JobEntry *JobsList::getJobById(int jobId)
 {
-  return &jobsList[jobId];
+  auto it = jobsList.find(jobId);
+
+  return it == jobsList.end() ? nullptr : &jobsList[jobId];
 }
 
 bool JobEntry::is_alive(pid_t pid)
@@ -618,4 +657,135 @@ void JobsList::killAllJobs()
   {
     kill(it->second.pid, 9);
   }
+}
+
+KillCommand::KillCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)
+{
+  this->jobsList = jobsList;
+}
+
+bool KillCommand::validate()
+{
+  if (numOfArgs > 3 || !std::isdigit(*args[2]))
+  {
+    return false;
+  }
+
+  std::string arg2 = string(args[1]);
+  return arg2[0] == '-' && _is_a_number(args[1]);
+}
+
+void KillCommand::execute()
+{
+  if (!validate())
+  {
+    throw Exception("kill: invalid arguments");
+  }
+  JobEntry *target_job = jobsList->getJobById(int(*args[2] - '0'));
+  if (target_job == nullptr)
+  {
+    throw Exception("kill: job-id " + string(args[2]) + " does not exist");
+  }
+  int signum = stoi(string(args[1]).substr(1).c_str());
+  kill(target_job->pid, signum);
+}
+
+ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)
+{
+  this->jobsList = jobsList;
+}
+
+bool ForegroundCommand::validate()
+{
+  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1]));
+}
+
+void ForegroundCommand::execute()
+{
+  if (!validate())
+  {
+    throw Exception("fg: invalid arguments");
+  }
+  JobEntry *target_job;
+  if (numOfArgs == 2)
+  {
+    target_job = jobsList->getJobById(int(*args[1] - '0'));
+    if (target_job == nullptr)
+    {
+      throw Exception("fg: job-id " + string(args[2]) + " does not exist");
+    }
+  }
+  else
+  {
+    target_job = jobsList->getLastJob();
+    if (target_job == nullptr)
+    {
+      throw Exception("fg: jobs list is empty");
+    }
+  }
+
+  cout << target_job->cmd_line << " : " << target_job->pid << endl;
+  jobsList->removeJobById(target_job->jid);
+  kill(target_job->pid, SIGCONT);
+  waitpid(target_job->pid, NULL, WSTOPPED);
+}
+
+BackgroundCommand::BackgroundCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)
+{
+  this->jobsList = jobsList;
+}
+
+bool BackgroundCommand::validate()
+{
+  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1]));
+}
+
+void BackgroundCommand::execute()
+{
+  if (!validate())
+  {
+    throw Exception("bg: invalid arguments");
+  }
+  JobEntry *target_job;
+  if (numOfArgs == 2)
+  {
+    target_job = jobsList->getJobById(int(*args[1] - '0'));
+    if (target_job == nullptr)
+    {
+      throw Exception("bg: job-id " + string(args[2]) + " does not exist");
+    }
+    else if (target_job->status != JobEntry::STOPPED)
+    {
+      throw Exception("bg: job-id " + string(args[2]) + " is already running in the background");
+    }
+  }
+  else
+  {
+    target_job = jobsList->getLastStoppedJob();
+    if (target_job == nullptr)
+    {
+      throw Exception("bg: there is no stopped jobs to resume");
+    }
+  }
+
+  cout << target_job->cmd_line << " : " << target_job->pid << endl;
+  kill(target_job->pid, SIGCONT);
+  target_job->status = JobEntry::BACKGROUND;
+}
+
+QuitCommand::QuitCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)
+{
+  this->jobsList = jobsList;
+}
+
+void QuitCommand::execute()
+{
+  if (numOfArgs == 2 and string(args[1]) == "kill")
+  {
+    jobsList->removeFinishedJobs();
+    cout << "sending SIGKILL signal to " << jobsList->jobsList.size() << " jobs:" << endl;
+    jobsList->printJobsList2();
+    jobsList->killAllJobs();
+  }
+  exit(0);
 }

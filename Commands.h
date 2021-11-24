@@ -204,6 +204,7 @@ public:
   ~JobsList() = default;
   void addJob(JobEntry job);
   void printJobsList();
+  void printJobsList2();
   void killAllJobs();
   void removeFinishedJobs();
   JobEntry *getJobById(int jobId);
@@ -215,7 +216,9 @@ public:
 class QuitCommand : public BuiltInCommand
 {
   // TODO: Add your data members public:
-  QuitCommand(const char *cmd_line, JobsList *jobs);
+public:
+  JobsList *jobsList;
+  QuitCommand(const char *cmd_line, JobsList *jobsList);
   virtual ~QuitCommand() {}
   void execute() override;
 };
@@ -232,9 +235,11 @@ public:
 
 class KillCommand : public BuiltInCommand
 {
-  // TODO: Add your data members
+  JobsList *jobsList;
+
 public:
-  KillCommand(const char *cmd_line, JobsList *jobs);
+  KillCommand(const char *cmd_line, JobsList *jobsList);
+  bool validate();
   virtual ~KillCommand() {}
   void execute() override;
 };
@@ -243,7 +248,9 @@ class ForegroundCommand : public BuiltInCommand
 {
   // TODO: Add your data members
 public:
-  ForegroundCommand(const char *cmd_line, JobsList *jobs);
+  JobsList *jobsList;
+  bool validate();
+  ForegroundCommand(const char *cmd_line, JobsList *jobsList);
   virtual ~ForegroundCommand() {}
   void execute() override;
 };
@@ -252,7 +259,9 @@ class BackgroundCommand : public BuiltInCommand
 {
   // TODO: Add your data members
 public:
-  BackgroundCommand(const char *cmd_line, JobsList *jobs);
+  JobsList *jobsList;
+  bool validate();
+  BackgroundCommand(const char *cmd_line, JobsList *jobsList);
   virtual ~BackgroundCommand() {}
   void execute() override;
 };
@@ -323,7 +332,6 @@ public:
   void execute() override;
 };
 
-
 class ExternalCommand : public Command
 {
 public:
@@ -336,6 +344,5 @@ public:
   virtual ~ExternalCommand() {}
   void execute() override;
 };
-
 
 #endif //SMASH_COMMAND_H_
