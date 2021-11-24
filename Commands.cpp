@@ -146,7 +146,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new JobsCommand(cmd_line, &jobList);
   }
-  else if (strlen(cmd_line) == 0)
+  else if (cmd_s.length() == 0)
   {
     return nullptr;
   }

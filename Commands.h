@@ -15,6 +15,7 @@
 #include <map>
 #include <stack>
 #include <signal.h>
+#include <algorithm>
 #include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
