@@ -593,7 +593,8 @@ void ExternalCommand::execute()
 
 JobEntry *JobsList::getLastStoppedJob()
 {
-  return &jobsList[last_jit_stopped];
+  auto it = jobsList.find(last_jit_stopped);
+  return it == jobsList.end() ? nullptr : &jobsList[last_jit_stopped];
 }
 JobEntry *JobsList::getLastJob()
 {
@@ -751,7 +752,7 @@ void BackgroundCommand::execute()
   JobEntry *target_job;
   if (numOfArgs == 2)
   {
-    target_job = jobsList->getJobById(int(*args[1] - '0'));
+    target_job = jobsList->getJobById(stoi(string(args[1])));
     if (target_job == nullptr)
     {
       throw Exception("bg: job-id " + string(args[2]) + " does not exist");
