@@ -680,7 +680,7 @@ void KillCommand::execute()
   {
     throw Exception("kill: invalid arguments");
   }
-  JobEntry *target_job = jobsList->getJobById(int(*args[2] - '0'));
+  JobEntry *target_job = jobsList->getJobById(stoi(args[2]));
   if (target_job == nullptr)
   {
     throw Exception("kill: job-id " + string(args[2]) + " does not exist");

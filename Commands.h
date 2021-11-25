@@ -2,6 +2,7 @@
 #define SMASH_COMMAND_H_
 
 #include <string>
+#include <algorithm>
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
