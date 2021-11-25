@@ -156,7 +156,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   }
   else if (firstWord.compare("fg") == 0)
   {
-    return new ForegroundCommand(cmd_line, &jobList);
+    return new ForegroundCommand(cmd_line, &jobList, this);
   }
   else if (firstWord.compare("bg") == 0)
   {
@@ -536,7 +536,6 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
 {
   this->shell = shell;
   this->cmd_line = cmd_line;
-  shell->current_command = this;
   job.cmd_line = string(cmd_line);
   if (_isBackgroundCommand(cmd_line))
   {
@@ -572,8 +571,9 @@ void ExternalCommand::execute()
   {
     if (is_fg)
     {
+      shell->current_fg_job = &job;
       waitpid(job.pid, NULL, WSTOPPED);
-      is_fg = false;
+      shell->current_fg_job = nullptr;
     }
     else
     {
@@ -581,7 +581,6 @@ void ExternalCommand::execute()
     }
     return;
   }
-  //// need to be fixed!!
 
   // in case of child
   string bash_pth("/bin/bash");
@@ -666,7 +665,7 @@ KillCommand::KillCommand(const char *cmd_line, JobsList *jobsList) : BuiltInComm
 
 bool KillCommand::validate()
 {
-  if (numOfArgs > 3 || !std::isdigit(*args[2]))
+  if (numOfArgs != 3 || (!std::isdigit(*args[2])))
   {
     return false;
   }
@@ -690,8 +689,9 @@ void KillCommand::execute()
   kill(target_job->pid, signum);
 }
 
-ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)
+ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList, SmallShell *shell) : BuiltInCommand(cmd_line)
 {
+  this->shell = shell;
   this->jobsList = jobsList;
 }
 
@@ -709,10 +709,10 @@ void ForegroundCommand::execute()
   JobEntry *target_job;
   if (numOfArgs == 2)
   {
-    target_job = jobsList->getJobById(int(*args[1] - '0'));
+    target_job = jobsList->getJobById(stoi(string(args[1])));
     if (target_job == nullptr)
     {
-      throw Exception("fg: job-id " + string(args[2]) + " does not exist");
+      throw Exception("fg: job-id " + string(args[1]) + " does not exist");
     }
   }
   else
@@ -726,8 +726,10 @@ void ForegroundCommand::execute()
 
   cout << target_job->cmd_line << " : " << target_job->pid << endl;
   jobsList->removeJobById(target_job->jid);
-  kill(target_job->pid, SIGCONT);
+  DO_SYS(kill(target_job->pid, SIGCONT));
+  shell->current_fg_job = target_job;
   waitpid(target_job->pid, NULL, WSTOPPED);
+  shell->current_fg_job = nullptr;
 }
 
 BackgroundCommand::BackgroundCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)

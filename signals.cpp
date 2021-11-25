@@ -10,24 +10,32 @@ void ctrlZHandler(int sig_num)
   // TODO: Add your implementation
   printf("smash: got ctrl-Z\n");
   SmallShell &smash = SmallShell::getInstance("smash");
-  if (smash.current_command == nullptr)
+  if ((smash.current_fg_job == nullptr) || !JobEntry::is_alive(smash.current_fg_job->pid))
   {
+    cout << smash.name << flush;
     return;
   }
-  ExternalCommand &current_cmd = *(smash.current_command);
-  if ((current_cmd.is_fg == true) && (JobEntry::is_alive(current_cmd.job.pid)))
-  {
-    DO_SYS(kill(current_cmd.job.pid,SIGSTOP));
-    current_cmd.job.status = JobEntry::STOPPED;
-    current_cmd.is_fg = false;
-    smash.jobList.addJob(current_cmd.job);
-    printf("smash: process %d was stopped\n",(int)current_cmd.job.pid);
-  }
+  JobEntry &current_fg_job = *(smash.current_fg_job);
+  DO_SYS(kill(current_fg_job.pid, SIGSTOP));
+  current_fg_job.status = JobEntry::STOPPED;
+  smash.jobList.addJob(current_fg_job);
+  printf("smash: process %d was stopped\n", (int)current_fg_job.pid);
+  smash.current_fg_job = nullptr;
 }
 
 void ctrlCHandler(int sig_num)
 {
-  // TODO: Add your implementation
+  printf("smash: got ctrl-C\n");
+  SmallShell &smash = SmallShell::getInstance("smash");
+  if ((smash.current_fg_job == nullptr) || !JobEntry::is_alive(smash.current_fg_job->pid))
+  {
+    cout << smash.name << flush;
+    return;
+  }
+  JobEntry &current_fg_job = *(smash.current_fg_job);
+  DO_SYS(kill(current_fg_job.pid, SIGINT));
+  printf("smash: process %d was killed\n", (int)current_fg_job.pid);
+  smash.current_fg_job = nullptr;
 }
 
 void alarmHandler(int sig_num)

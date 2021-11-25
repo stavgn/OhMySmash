@@ -245,13 +245,16 @@ public:
   void execute() override;
 };
 
+class SmallShell;
+
 class ForegroundCommand : public BuiltInCommand
 {
   // TODO: Add your data members
 public:
+  SmallShell *shell;
   JobsList *jobsList;
   bool validate();
-  ForegroundCommand(const char *cmd_line, JobsList *jobsList);
+  ForegroundCommand(const char *cmd_line, JobsList *jobsList, SmallShell *shell);
   virtual ~ForegroundCommand() {}
   void execute() override;
 };
@@ -276,7 +279,6 @@ public:
   void execute() override;
 };
 
-class ExternalCommand;
 
 class SmallShell
 {
@@ -287,7 +289,7 @@ public:
   std::string name;
   char *old_pwd = nullptr;
   JobsList jobList;
-  ExternalCommand *current_command = nullptr;
+  JobEntry *current_fg_job = nullptr;
   void updateShellName(std::string name);
   Command *CreateCommand(const char *cmd_line);
   SmallShell(std::string name);
