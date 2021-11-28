@@ -571,9 +571,8 @@ void ExternalCommand::execute()
   {
     if (is_fg)
     {
-      shell->current_fg_job = &job;
+      shell->current_fg_job = job;
       waitpid(job.pid, NULL, WSTOPPED);
-      shell->current_fg_job = nullptr;
     }
     else
     {
@@ -593,8 +592,15 @@ void ExternalCommand::execute()
 
 JobEntry *JobsList::getLastStoppedJob()
 {
-  auto it = jobsList.find(last_jit_stopped);
-  return it == jobsList.end() ? nullptr : &jobsList[last_jit_stopped];
+  auto it = jobsList.rbegin();
+  for (; it != jobsList.rend(); it++)
+  {
+    if (it->second.status == JobEntry::STOPPED)
+    {
+      return &(it->second);
+    }
+  }
+  return nullptr;
 }
 JobEntry *JobsList::getLastJob()
 {
@@ -614,17 +620,58 @@ JobEntry *JobsList::getJobById(int jobId)
   return it == jobsList.end() ? nullptr : &jobsList[jobId];
 }
 
-bool JobEntry::is_alive(pid_t pid)
+// bool JobEntry::is_alive(pid_t pid)
+// {
+//   int wait_status;
+//   pid_t result = waitpid(pid, &wait_status, WNOHANG);
+//   if (result == -1)
+//   {
+//     throw SysCallException("waitpid");
+//   }
+
+//   if (result == 0)
+//   {
+//     return true;
+//   }
+
+//   return false;
+// }
+
+bool JobEntry::is_alive(int ProcessId)
 {
-  pid_t result = waitpid(pid, NULL, WNOHANG);
-  if (result == 0)
+  // Wait for child process, this should clean up defunct processes
+  waitpid(ProcessId, nullptr, WNOHANG);
+  // kill failed let's see why..
+  if (kill(ProcessId, 0) == -1)
   {
-    return true;
+    // First of all kill may fail with EPERM if we run as a different user and we have no access, so let's make sure the errno is ESRCH (Process not found!)
+    if (errno != ESRCH)
+    {
+      return true;
+    }
+    return false;
   }
-  else if (result == -1)
+  // If kill didn't fail the process is still running
+  return true;
+}
+bool JobEntry::is_stopped(pid_t pid)
+{
+  int wait_status;
+  if (!JobEntry::is_alive(pid))
+  {
+    return false;
+  }
+  pid_t result = waitpid(pid, &wait_status, WUNTRACED | WNOHANG);
+  if (result == -1)
   {
     throw SysCallException("waitpid");
   }
+
+  if (WIFSTOPPED(wait_status))
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -638,6 +685,10 @@ void JobsList::removeFinishedJobs()
     {
 
       to_be_deleted.push(it->second.jid);
+    }
+    if (JobEntry::is_stopped(it->second.pid))
+    {
+      it->second.status = JobEntry::STOPPED;
     }
   }
 
@@ -728,9 +779,8 @@ void ForegroundCommand::execute()
   cout << target_job->cmd_line << " : " << target_job->pid << endl;
   jobsList->removeJobById(target_job->jid);
   DO_SYS(kill(target_job->pid, SIGCONT));
-  shell->current_fg_job = target_job;
+  shell->current_fg_job = *target_job;
   waitpid(target_job->pid, NULL, WSTOPPED);
-  shell->current_fg_job = nullptr;
 }
 
 BackgroundCommand::BackgroundCommand(const char *cmd_line, JobsList *jobsList) : BuiltInCommand(cmd_line)

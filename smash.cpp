@@ -34,6 +34,10 @@ int main(int argc, char *argv[])
         {
             e.handle();
         }
+        catch (...)
+        {
+           perror("hello!");
+        }
     }
     return 0;
 }

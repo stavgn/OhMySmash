@@ -191,6 +191,7 @@ public:
   time_t time;
 
   static bool is_alive(pid_t pid);
+  static bool is_stopped(pid_t pid);
   bool operator<(const JobEntry &job2)
   {
     return this->jid < job2.jid;
@@ -201,7 +202,6 @@ class JobsList
 {
 public:
   std::map<int, JobEntry> jobsList;
-  int last_jit_stopped;
   JobsList() = default;
   ~JobsList() = default;
   void addJob(JobEntry job);
@@ -290,7 +290,7 @@ public:
   std::string name;
   char *old_pwd = nullptr;
   JobsList jobList;
-  JobEntry *current_fg_job = nullptr;
+  JobEntry current_fg_job;
   void updateShellName(std::string name);
   Command *CreateCommand(const char *cmd_line);
   SmallShell(std::string name);
