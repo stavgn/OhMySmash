@@ -183,7 +183,7 @@ public:
     FOREGROUND = 1,
     BACKGROUND = 2
   };
-  int jid;
+  int jid = 0;
   pid_t pid;
   Command *cmd;
   std::string cmd_line;

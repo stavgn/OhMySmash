@@ -494,7 +494,7 @@ void JobsList::addJob(JobEntry job)
   {
     job.jid = 1;
   }
-  else
+  else if(job.jid == 0)
   {
     JobEntry max_job = jobsList.rbegin()->second;
     job.jid = max_job.jid + 1;
@@ -690,6 +690,9 @@ void JobsList::removeFinishedJobs()
     {
       it->second.status = JobEntry::STOPPED;
     }
+    else{
+       it->second.status = JobEntry::BACKGROUND;
+    }
   }
 
   while (!to_be_deleted.empty())
@@ -779,6 +782,7 @@ void ForegroundCommand::execute()
   cout << target_job->cmd_line << " : " << target_job->pid << endl;
   jobsList->removeJobById(target_job->jid);
   DO_SYS(kill(target_job->pid, SIGCONT));
+  target_job->status = JobEntry::FOREGROUND;
   shell->current_fg_job = *target_job;
   waitpid(target_job->pid, NULL, WSTOPPED);
 }
