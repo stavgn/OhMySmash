@@ -87,14 +87,17 @@ int is_piped_command(string cmd_s)
   return cmd_s.find("|") != std::string::npos || cmd_s.find("|&") != std::string::npos;
 }
 
-bool _is_a_number(const char *c)
+bool _is_a_number(const char *c, int offset)
 {
-  std::string s = string(c);
-  return std::find_if(s.begin() + 1, s.end(),
-                      [](unsigned char c)
-                      {
-                        return !std::isdigit(c);
-                      }) == s.end();
+  std::string s = string(c + offset);
+  try {
+    stoi(s);
+  }
+  catch(...)
+  {
+    return false;
+  }
+  return true;
 }
 // TODO: Add your implementation for classes in Commands.h
 
@@ -298,8 +301,8 @@ void ChangeDirCommand::execute()
   {
     *old_pwd = (char *)malloc(PATH_MAX);
   }
-
-  if (getcwd(*old_pwd, PATH_MAX) == NULL) // update old_pwd
+  char temp_pwd[PATH_MAX];
+  if (getcwd(temp_pwd, PATH_MAX) == NULL) // update old_pwd
   {
     throw(SysCallException(std::string("getcwd")));
   }
@@ -308,6 +311,7 @@ void ChangeDirCommand::execute()
   {
     throw(SysCallException("chdir"));
   }
+  strcpy(*old_pwd,temp_pwd);
 }
 
 HeadCommand::HeadCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
@@ -512,7 +516,7 @@ void JobsList::printJobsList()
     cout << "[" << cur_job.jid << "] ";
     cout << cur_job.cmd_line << " : ";
     cout << cur_job.pid << " ";
-    cout << difftime(time(NULL), cur_job.time);
+    cout << difftime(time(NULL), cur_job.time) << " secs";
     if (cur_job.status == JobEntry::STOPPED)
     {
       cout << " (stopped)";
@@ -721,13 +725,13 @@ KillCommand::KillCommand(const char *cmd_line, JobsList *jobsList) : BuiltInComm
 
 bool KillCommand::validate()
 {
-  if (numOfArgs != 3 || (!std::isdigit(*args[2])))
+  if (numOfArgs != 3 || (!_is_a_number(args[2],0)))
   {
     return false;
   }
 
   std::string arg2 = string(args[1]);
-  return arg2[0] == '-' && _is_a_number(args[1]);
+  return arg2[0] == '-' && _is_a_number(args[1],1);
 }
 
 void KillCommand::execute()
@@ -753,7 +757,7 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList, S
 
 bool ForegroundCommand::validate()
 {
-  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1]));
+  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1],0));
 }
 
 void ForegroundCommand::execute()
@@ -795,7 +799,7 @@ BackgroundCommand::BackgroundCommand(const char *cmd_line, JobsList *jobsList) :
 
 bool BackgroundCommand::validate()
 {
-  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1]));
+  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1],0));
 }
 
 void BackgroundCommand::execute()
@@ -810,11 +814,11 @@ void BackgroundCommand::execute()
     target_job = jobsList->getJobById(stoi(string(args[1])));
     if (target_job == nullptr)
     {
-      throw Exception("bg: job-id " + string(args[2]) + " does not exist");
+      throw Exception("bg: job-id " + string(args[1]) + " does not exist");
     }
     else if (target_job->status != JobEntry::STOPPED)
     {
-      throw Exception("bg: job-id " + string(args[2]) + " is already running in the background");
+      throw Exception("bg: job-id " + string(args[1]) + " is already running in the background");
     }
   }
   else
@@ -841,7 +845,7 @@ void QuitCommand::execute()
   if (numOfArgs == 2 and string(args[1]) == "kill")
   {
     jobsList->removeFinishedJobs();
-    cout << "sending SIGKILL signal to " << jobsList->jobsList.size() << " jobs:" << endl;
+    cout << "smash: sending SIGKILL signal to " << jobsList->jobsList.size() << " jobs:" << endl;
     jobsList->printJobsList2();
     jobsList->killAllJobs();
   }
