@@ -654,20 +654,21 @@ bool JobEntry::is_alive(int ProcessId)
   // If kill didn't fail the process is still running
   return true;
 }
-bool JobEntry::is_stopped(pid_t pid)
+bool JobEntry::is_stopped(pid_t pid, JobEntry::JobStatus status)
 {
   int wait_status;
   if (!JobEntry::is_alive(pid))
   {
     return false;
   }
-  pid_t result = waitpid(pid, &wait_status, WUNTRACED | WNOHANG);
+  pid_t result = waitpid(pid, &wait_status, WUNTRACED | WNOHANG | WCONTINUED);
   if (result == -1)
   {
     throw SysCallException("waitpid");
   }
+  
 
-  if (WIFSTOPPED(wait_status))
+  if (((status == JobEntry::STOPPED) && !WIFCONTINUED(wait_status)) || WIFSTOPPED(wait_status))
   {
     return true;
   }
@@ -686,7 +687,7 @@ void JobsList::removeFinishedJobs()
 
       to_be_deleted.push(it->second.jid);
     }
-    if (JobEntry::is_stopped(it->second.pid))
+    if (JobEntry::is_stopped(it->second.pid, it->second.status))
     {
       it->second.status = JobEntry::STOPPED;
     }

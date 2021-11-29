@@ -191,7 +191,7 @@ public:
   time_t time;
 
   static bool is_alive(pid_t pid);
-  static bool is_stopped(pid_t pid);
+  static bool is_stopped(pid_t pid, JobEntry::JobStatus status);
   bool operator<(const JobEntry &job2)
   {
     return this->jid < job2.jid;
