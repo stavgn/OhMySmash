@@ -753,7 +753,7 @@ void KillCommand::execute()
     throw Exception("kill: job-id " + string(args[2]) + " does not exist");
   }
   int signum = stoi(string(args[1]).substr(1).c_str());
-  kill(target_job->pid, signum);
+  DO_SYS(kill(target_job->pid, signum))
   cout << "signal number " << signum << " was sent to pid " << target_job->pid << endl;
 }
 
@@ -839,7 +839,7 @@ void BackgroundCommand::execute()
   }
 
   cout << target_job->cmd_line << " : " << target_job->pid << endl;
-  kill(target_job->pid, SIGCONT);
+  DO_SYS(kill(target_job->pid, SIGCONT));
   target_job->status = JobEntry::BACKGROUND;
 }
 
