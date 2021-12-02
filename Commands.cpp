@@ -747,6 +747,7 @@ void KillCommand::execute()
   }
   int signum = stoi(string(args[1]).substr(1).c_str());
   kill(target_job->pid, signum);
+  cout << "signal number " << signum << " was sent to pid " << target_job->pid << endl;
 }
 
 ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList, SmallShell *shell) : BuiltInCommand(cmd_line)
