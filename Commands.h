@@ -109,10 +109,12 @@ public:
   {
     if (std::string(args[numOfArgs - 2]) == ">")
     {
+      numOfArgs -= 2;
       return new CreateOrOverWriteToFile(args[numOfArgs - 1]);
     }
     else if (std::string(args[numOfArgs - 2]) == ">>")
     {
+      numOfArgs -= 2;
       return new CreateOrAppendToFile(args[numOfArgs - 1]);
     }
 
@@ -279,7 +281,6 @@ public:
   virtual ~HeadCommand() {}
   void execute() override;
 };
-
 
 class SmallShell
 {
