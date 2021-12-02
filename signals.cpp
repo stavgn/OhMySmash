@@ -12,7 +12,6 @@ void ctrlZHandler(int sig_num)
   SmallShell &smash = SmallShell::getInstance("smash");
   if ((!JobEntry::is_alive(smash.current_fg_job.pid)) || (smash.current_fg_job.status != JobEntry::FOREGROUND))
   {
-    cout << smash.name << flush;
     return;
   }
   DO_SYS(kill(smash.current_fg_job.pid, SIGSTOP));
@@ -27,7 +26,6 @@ void ctrlCHandler(int sig_num)
   SmallShell &smash = SmallShell::getInstance("smash");
    if ((!JobEntry::is_alive(smash.current_fg_job.pid)) || (smash.current_fg_job.status != JobEntry::FOREGROUND))
   {
-    cout << smash.name << flush;
     return;
   }
   DO_SYS(kill(smash.current_fg_job.pid, SIGINT));
