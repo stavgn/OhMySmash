@@ -531,7 +531,7 @@ void JobsList::printJobsList2()
   for (auto i = jobsList.cbegin(); i != jobsList.cend(); ++i)
   {
     JobEntry cur_job = i->second;
-    cout << cur_job.jid << " : ";
+    cout << cur_job.jid << ": ";
     cout << cur_job.cmd_line;
     cout << endl;
   }
