@@ -733,7 +733,12 @@ bool KillCommand::validate()
   }
 
   std::string arg2 = string(args[1]);
-  return arg2[0] == '-' && _is_a_number(args[1], 1);
+  if (arg2[0] == '-' && _is_a_number(args[1], 1))
+  {
+    int signum = stoi(string(args[1]).substr(1).c_str());
+    return signum >= 1 && signum <= 31;
+  }
+  return false;
 }
 
 void KillCommand::execute()
