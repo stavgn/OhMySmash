@@ -759,8 +759,6 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList, S
 
 bool ForegroundCommand::validate()
 {
-  cout << numOfArgs
-       << std::endl;
   return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1], 0));
 }
 
