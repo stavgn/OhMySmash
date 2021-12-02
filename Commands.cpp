@@ -552,7 +552,10 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
     is_fg = true;
     job.status = JobEntry::FOREGROUND;
   }
+}
 
+void ExternalCommand::execute()
+{
   pid_t pid = fork();
   if (pid < 0)
   {
@@ -568,10 +571,6 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
     is_father = true;
     job.pid = pid;
   }
-}
-
-void ExternalCommand::execute()
-{
   if (is_father)
   {
     if (is_fg)
