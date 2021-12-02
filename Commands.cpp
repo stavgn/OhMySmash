@@ -90,10 +90,11 @@ int is_piped_command(string cmd_s)
 bool _is_a_number(const char *c, int offset)
 {
   std::string s = string(c + offset);
-  try {
+  try
+  {
     stoi(s);
   }
-  catch(...)
+  catch (...)
   {
     return false;
   }
@@ -193,7 +194,7 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  IOConfig = IOFactory::getIO(args, numOfArgs);
+  IOConfig = IOFactory::getIO(args, &numOfArgs);
 }
 
 void Command::prepare()
@@ -311,7 +312,7 @@ void ChangeDirCommand::execute()
   {
     throw(SysCallException("chdir"));
   }
-  strcpy(*old_pwd,temp_pwd);
+  strcpy(*old_pwd, temp_pwd);
 }
 
 HeadCommand::HeadCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
@@ -498,7 +499,7 @@ void JobsList::addJob(JobEntry job)
   {
     job.jid = 1;
   }
-  else if(job.jid == 0)
+  else if (job.jid == 0)
   {
     JobEntry max_job = jobsList.rbegin()->second;
     job.jid = max_job.jid + 1;
@@ -670,7 +671,6 @@ bool JobEntry::is_stopped(pid_t pid, JobEntry::JobStatus status)
   {
     throw SysCallException("waitpid");
   }
-  
 
   if (((status == JobEntry::STOPPED) && !WIFCONTINUED(wait_status)) || WIFSTOPPED(wait_status))
   {
@@ -695,8 +695,9 @@ void JobsList::removeFinishedJobs()
     {
       it->second.status = JobEntry::STOPPED;
     }
-    else{
-       it->second.status = JobEntry::BACKGROUND;
+    else
+    {
+      it->second.status = JobEntry::BACKGROUND;
     }
   }
 
@@ -725,13 +726,13 @@ KillCommand::KillCommand(const char *cmd_line, JobsList *jobsList) : BuiltInComm
 
 bool KillCommand::validate()
 {
-  if (numOfArgs != 3 || (!_is_a_number(args[2],0)))
+  if (numOfArgs != 3 || (!_is_a_number(args[2], 0)))
   {
     return false;
   }
 
   std::string arg2 = string(args[1]);
-  return arg2[0] == '-' && _is_a_number(args[1],1);
+  return arg2[0] == '-' && _is_a_number(args[1], 1);
 }
 
 void KillCommand::execute()
@@ -758,7 +759,9 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobsList, S
 
 bool ForegroundCommand::validate()
 {
-  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1],0));
+  cout << numOfArgs
+       << std::endl;
+  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1], 0));
 }
 
 void ForegroundCommand::execute()
@@ -800,7 +803,7 @@ BackgroundCommand::BackgroundCommand(const char *cmd_line, JobsList *jobsList) :
 
 bool BackgroundCommand::validate()
 {
-  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1],0));
+  return numOfArgs == 1 || (numOfArgs == 2 && _is_a_number(args[1], 0));
 }
 
 void BackgroundCommand::execute()

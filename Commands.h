@@ -105,20 +105,24 @@ class IOFactory
 public:
   IOFactory();
   ~IOFactory();
-  static IO *getIO(char **args, int numOfArgs)
+  static IO *getIO(char **args, int *numOfArgs)
   {
-    if (std::string(args[numOfArgs - 2]) == ">")
+    IO *io = nullptr;
+    if (std::string(args[*numOfArgs - 2]) == ">")
     {
-      numOfArgs -= 2;
-      return new CreateOrOverWriteToFile(args[numOfArgs - 1]);
+      io = new CreateOrOverWriteToFile(args[*numOfArgs - 1]);
     }
-    else if (std::string(args[numOfArgs - 2]) == ">>")
+    else if (std::string(args[*numOfArgs - 2]) == ">>")
     {
-      numOfArgs -= 2;
-      return new CreateOrAppendToFile(args[numOfArgs - 1]);
+      io = new CreateOrAppendToFile(args[*numOfArgs - 1]);
     }
 
-    return nullptr;
+    if (io == nullptr)
+    {
+      return nullptr;
+    }
+    *numOfArgs -= 2;
+    return io;
   }
   static IO *getPipe(Pipe::PipeType type)
   {
