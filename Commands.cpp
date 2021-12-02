@@ -753,7 +753,7 @@ void KillCommand::execute()
     throw Exception("kill: job-id " + string(args[2]) + " does not exist");
   }
   int signum = stoi(string(args[1]).substr(1).c_str());
-  DO_SYS(kill(target_job->pid, signum))
+  DO_SYS(kill(target_job->pid, signum));
   cout << "signal number " << signum << " was sent to pid " << target_job->pid << endl;
 }
 
