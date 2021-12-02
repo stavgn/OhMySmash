@@ -619,6 +619,7 @@ void JobsList::removeJobById(int jobId)
 
 JobEntry *JobsList::getJobById(int jobId)
 {
+  removeFinishedJobs();
   auto it = jobsList.find(jobId);
 
   return it == jobsList.end() ? nullptr : &jobsList[jobId];
