@@ -170,6 +170,10 @@ Command *SmallShell::CreateCommand(const char *cmd_line)
   {
     return new QuitCommand(cmd_line, &jobList);
   }
+  else if (firstWord.compare("timeout") == 0)
+  {
+    return new TimedCommand(cmd_line, this);
+  }
   else
   {
     return new ExternalCommand(cmd_line, this);
@@ -191,7 +195,7 @@ void SmallShell::updateShellName(std::string name)
   this->name = _trim(name) + "> ";
 }
 
-Command::Command(const char *cmd_line)
+Command::Command(const char *cmd_line) : cmd_line(cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
   IOConfig = IOFactory::getIO(args, &numOfArgs);
@@ -625,23 +629,6 @@ JobEntry *JobsList::getJobById(int jobId)
   return it == jobsList.end() ? nullptr : &jobsList[jobId];
 }
 
-// bool JobEntry::is_alive(pid_t pid)
-// {
-//   int wait_status;
-//   pid_t result = waitpid(pid, &wait_status, WNOHANG);
-//   if (result == -1)
-//   {
-//     throw SysCallException("waitpid");
-//   }
-
-//   if (result == 0)
-//   {
-//     return true;
-//   }
-
-//   return false;
-// }
-
 bool JobEntry::is_alive(int ProcessId)
 {
   // Wait for child process, this should clean up defunct processes
@@ -859,16 +846,63 @@ void QuitCommand::execute()
   exit(0);
 }
 
-void TimedJobs::addJob(int timeKey, JobEntry job)
+TimedJobEntry::TimedJobEntry(unsigned int time_left, ExternalCommand *command) : time_left(time_left), eCommand(command)
 {
-  timedList[timeKey] = job;
+  insert_time = time(NULL);
 }
 
-JobEntry TimedJobs::getFirstJob()
+void TimedJobs::addJob(unsigned int timeKey, TimedJobEntry &job)
 {
-  return timedList.begin()->second;
+  timedList.push(job);
+}
+
+const TimedJobEntry &TimedJobs::getFirstJob()
+{
+  return timedList.top();
 }
 void TimedJobs::removFirstJob()
 {
-  timedList.erase(timedList.begin());
+  timedList.pop();
+}
+
+bool TimedJobs::empty()
+{
+  return timedList.empty();
+}
+
+TimedCommand::TimedCommand(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
+{
+  if (numOfArgs < 3)
+  {
+    throw(Exception("timeout: not enough arguments"));
+  }
+  if (!_is_a_number(args[1], 0))
+  {
+    throw(Exception("timeout: invalid arguments"));
+  }
+  this->shell = shell;
+  this->timeJobs = &shell->timedJobList;
+}
+
+void TimedCommand::execute()
+{
+  string external_cmd_line("");
+  for (int i = 2; i < numOfArgs; i++)
+  {
+    external_cmd_line += " " + string(args[i]);
+  }
+  ExternalCommand *commnad = new ExternalCommand(external_cmd_line.c_str(), shell);
+  commnad->job.cmd_line = string(cmd_line);
+  TimedJobEntry *job = new TimedJobEntry(stoi(args[1]), commnad);
+  if (timeJobs->empty())
+  {
+    alarm(job->time_left);
+  }
+  timeJobs->addJob(job->time_left, *job);
+  commnad->execute();
+}
+
+bool TimedJobEntry::operator<(const TimedJobEntry &job2) const
+{
+  return (time_left - difftime(time(NULL), insert_time)) > (job2.time_left - difftime(time(NULL), job2.insert_time));
 }

@@ -16,6 +16,7 @@
 #include <map>
 #include <stack>
 #include <signal.h>
+#include <queue>
 #include <algorithm>
 #include "Exception.h"
 #define COMMAND_ARGS_MAX_LENGTH (200)
@@ -31,6 +32,10 @@
       throw SysCallException(#syscall); \
     }                                   \
   } while (0)
+
+class SmallShell;
+class Command;
+class ExternalCommand;
 
 class IO
 {
@@ -134,6 +139,7 @@ class Command
 {
 
 public:
+  const char *cmd_line;
   char *args[COMMAND_MAX_ARGS];
   int numOfArgs;
   IO *IOConfig = nullptr;
@@ -252,7 +258,6 @@ public:
   void execute() override;
 };
 
-class SmallShell;
 
 class ForegroundCommand : public BuiltInCommand
 {
@@ -286,16 +291,41 @@ public:
   void execute() override;
 };
 
+class TimedJobEntry
+{
+  public:
+  unsigned int time_left;
+  time_t insert_time;
+  ExternalCommand *eCommand;
+  bool operator<(const TimedJobEntry &job2) const;
+  TimedJobEntry(unsigned int time_left, ExternalCommand* command);
+  ~TimedJobEntry() {} // should be "delete eCommand;"
+};
+
 class TimedJobs
 {
 public:
-  std::map<int, JobEntry> timedList;
+  std::priority_queue<TimedJobEntry> timedList;
   TimedJobs() = default;
   ~TimedJobs() = default;
-  void addJob(int timeKey, JobEntry job);
-  JobEntry getFirstJob();
+  void addJob(unsigned int timeKey,  TimedJobEntry& job);
+  const TimedJobEntry& getFirstJob();
   void removFirstJob();
+  bool empty();
 };
+
+class TimedCommand : public Command
+{
+public:
+  TimedJobs *timeJobs;
+  SmallShell *shell;
+  TimedCommand(const char *cmd_line, SmallShell *shell);
+  ~TimedCommand() {}
+  void execute() override;
+};
+
+
+
 
 class SmallShell
 {
@@ -306,6 +336,7 @@ public:
   std::string name;
   char *old_pwd = nullptr;
   JobsList jobList;
+  TimedJobs timedJobList;
   JobEntry current_fg_job;
   void updateShellName(std::string name);
   Command *CreateCommand(const char *cmd_line);
@@ -364,5 +395,8 @@ public:
   virtual ~ExternalCommand() {}
   void execute() override;
 };
+
+
+
 
 #endif // SMASH_COMMAND_H_

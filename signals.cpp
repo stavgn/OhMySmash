@@ -24,7 +24,7 @@ void ctrlCHandler(int sig_num)
 {
   printf("smash: got ctrl-C\n");
   SmallShell &smash = SmallShell::getInstance("smash");
-   if ((!JobEntry::is_alive(smash.current_fg_job.pid)) || (smash.current_fg_job.status != JobEntry::FOREGROUND))
+  if ((!JobEntry::is_alive(smash.current_fg_job.pid)) || (smash.current_fg_job.status != JobEntry::FOREGROUND))
   {
     return;
   }
@@ -34,5 +34,27 @@ void ctrlCHandler(int sig_num)
 
 void alarmHandler(int sig_num)
 {
-  // TODO: Add your implementation
+  cout << "smash: got an alarm" << endl;
+  SmallShell &smash = SmallShell::getInstance("smash");
+  JobEntry &job = (smash.timedJobList.getFirstJob()).eCommand->job;
+  smash.timedJobList.removFirstJob();
+  if ((JobEntry::is_alive(job.pid)))
+  {
+    DO_SYS(kill(job.pid, SIGINT));
+    cout << "smash: " << job.cmd_line << " timed out!" << endl;
+  }
+
+  if(smash.timedJobList.empty())
+  {
+    return;
+  }
+  const TimedJobEntry &next_job = (smash.timedJobList.getFirstJob());
+  if (next_job.time_left - difftime(time(NULL), next_job.insert_time) == 0) //if the next alarm should go now
+  {
+    DO_SYS(kill(getpid(), SIGALRM));
+    return;
+  }
+
+  alarm(next_job.time_left - difftime(time(NULL), next_job.insert_time));
+
 }
