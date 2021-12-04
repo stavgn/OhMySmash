@@ -34,14 +34,14 @@ void ctrlCHandler(int sig_num)
 
 void alarmHandler(int sig_num)
 {
-  cout << "smash: got an alarm" << endl;
+  cout <<"smash: got an alarm" << endl << flush;
   SmallShell &smash = SmallShell::getInstance("smash");
   JobEntry &job = (smash.timedJobList.getFirstJob()).eCommand->job;
   smash.timedJobList.removFirstJob();
   if ((JobEntry::is_alive(job.pid)))
   {
     DO_SYS(kill(job.pid, SIGINT));
-    cout << "smash: " << job.cmd_line << " timed out!" << endl;
+    cout << "smash: " << job.cmd_line << " timed out!" << endl << flush;
   }
 
   if(smash.timedJobList.empty())
