@@ -49,12 +49,12 @@ void alarmHandler(int sig_num)
     return;
   }
   const TimedJobEntry &next_job = (smash.timedJobList.getFirstJob());
-  if (next_job.time_left - difftime(time(NULL), next_job.insert_time) == 0) //if the next alarm should go now
+  if (next_job.time_left() == 0) //if the next alarm should go now
   {
     DO_SYS(kill(getpid(), SIGALRM));
     return;
   }
 
-  alarm(next_job.time_left - difftime(time(NULL), next_job.insert_time));
+  alarm(next_job.time_left());
 
 }

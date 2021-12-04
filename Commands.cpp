@@ -846,9 +846,14 @@ void QuitCommand::execute()
   exit(0);
 }
 
-TimedJobEntry::TimedJobEntry(unsigned int time_left, ExternalCommand *command) : time_left(time_left), eCommand(command)
+TimedJobEntry::TimedJobEntry(unsigned int time_left, ExternalCommand *command) : alarm_time(time_left), eCommand(command)
 {
   insert_time = time(NULL);
+}
+
+double TimedJobEntry::time_left() const
+{
+  return alarm_time - difftime(time(NULL), insert_time);
 }
 
 void TimedJobs::addJob(unsigned int timeKey, TimedJobEntry &job)
@@ -894,15 +899,15 @@ void TimedCommand::execute()
   ExternalCommand *commnad = new ExternalCommand(external_cmd_line.c_str(), shell);
   commnad->job.cmd_line = string(cmd_line);
   TimedJobEntry *job = new TimedJobEntry(stoi(args[1]), commnad);
-  if (timeJobs->empty())
+  if (timeJobs->empty() || (job->time_left() < timeJobs->getFirstJob().time_left()))
   {
-    alarm(job->time_left);
+    alarm(job->alarm_time);
   }
-  timeJobs->addJob(job->time_left, *job);
+  timeJobs->addJob(job->alarm_time, *job);
   commnad->execute();
 }
 
 bool TimedJobEntry::operator<(const TimedJobEntry &job2) const
 {
-  return (time_left - difftime(time(NULL), insert_time)) > (job2.time_left - difftime(time(NULL), job2.insert_time));
+  return (time_left()) > (job2.time_left());
 }

@@ -294,10 +294,11 @@ public:
 class TimedJobEntry
 {
   public:
-  unsigned int time_left;
+  unsigned int alarm_time;
   time_t insert_time;
   ExternalCommand *eCommand;
   bool operator<(const TimedJobEntry &job2) const;
+  double time_left() const;
   TimedJobEntry(unsigned int time_left, ExternalCommand* command);
   ~TimedJobEntry() {} // should be "delete eCommand;"
 };
