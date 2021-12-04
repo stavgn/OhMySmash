@@ -221,7 +221,7 @@ Command::~Command()
   }
 }
 
-BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(cmd_line)
+BuiltInCommand::BuiltInCommand(const char *cmd_line) : Command(_removeBackgroundSign(cmd_line).c_str())
 {
 }
 
@@ -324,7 +324,7 @@ void HeadCommand::execute()
   int path_arg = 1;
   if (numOfArgs < 2)
   {
-    throw(Exception("head: not enough argmuments"));
+    throw(Exception("head: not enough arguments"));
   }
   if ((numOfArgs >= 3) && (args[1][0] == '-'))
   {
