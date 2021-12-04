@@ -286,6 +286,17 @@ public:
   void execute() override;
 };
 
+class TimedJobs
+{
+public:
+  std::map<int, JobEntry> timedList;
+  TimedJobs() = default;
+  ~TimedJobs() = default;
+  void addJob(int timeKey, JobEntry job);
+  JobEntry getFirstJob();
+  void removFirstJob();
+};
+
 class SmallShell
 {
 private:
@@ -354,4 +365,4 @@ public:
   void execute() override;
 };
 
-#endif //SMASH_COMMAND_H_
+#endif // SMASH_COMMAND_H_

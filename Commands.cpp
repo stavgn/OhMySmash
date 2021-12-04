@@ -114,8 +114,8 @@ SmallShell::~SmallShell()
 }
 
 /**
-* Creates and returns a pointer to Command class which matches the given command line (cmd_line)
-*/
+ * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
+ */
 Command *SmallShell::CreateCommand(const char *cmd_line)
 {
   // For example:
@@ -857,4 +857,18 @@ void QuitCommand::execute()
     jobsList->killAllJobs();
   }
   exit(0);
+}
+
+void TimedJobs::addJob(int timeKey, JobEntry job)
+{
+  timedList[timeKey] = job;
+}
+
+JobEntry TimedJobs::getFirstJob()
+{
+  return timedList.begin()->second;
+}
+void TimedJobs::removFirstJob()
+{
+  timedList.erase(timedList.begin());
 }
