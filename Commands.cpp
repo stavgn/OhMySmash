@@ -406,7 +406,7 @@ void WriteToFile::revert()
   reverted = 1;
 }
 
-PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line), shell(shell)
+PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
 {
   std::string cmd_line1;
   std::string cmd_line2;
