@@ -406,11 +406,13 @@ void WriteToFile::revert()
   reverted = 1;
 }
 
-PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line)
+PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(cmd_line), shell(shell)
 {
   std::string cmd_line1;
   std::string cmd_line2;
   Pipe::PipeType type = Pipe::getPipeType(string(cmd_line));
+  Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
+  PipeIO->loadShell(shell);
 
   switch (type)
   {
@@ -454,6 +456,11 @@ Pipe::Pipe(PipeType type) : type(type)
   pipe(my_pipe);
 }
 
+void Pipe::loadShell(SmallShell *shell)
+{
+  this->shell = shell;
+}
+
 void Pipe::config()
 {
   is_father = fork() != 0;
@@ -468,6 +475,7 @@ void Pipe::config()
   else
   {
     setpgrp();
+    shell->isMaster = false;
     dup2(my_pipe[0], 0);
     close(my_pipe[0]);
     close(my_pipe[1]);
@@ -560,33 +568,36 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
 
 void ExternalCommand::execute()
 {
-  pid_t pid = fork();
-  if (pid < 0)
+  if (shell->isMaster)
   {
-    throw SysCallException("fork");
-  }
-  else if (pid == 0)
-  {
-    setpgrp();
-    is_father = false;
-  }
-  else
-  {
-    is_father = true;
-    job.pid = pid;
-  }
-  if (is_father)
-  {
-    if (is_fg)
+    pid_t pid = fork();
+    if (pid < 0)
     {
-      shell->current_fg_job = job;
-      waitpid(job.pid, NULL, WSTOPPED);
+      throw SysCallException("fork");
+    }
+    else if (pid == 0)
+    {
+      setpgrp();
+      is_father = false;
     }
     else
     {
-      shell->jobList.addJob(job);
+      is_father = true;
+      job.pid = pid;
     }
-    return;
+    if (is_father)
+    {
+      if (is_fg)
+      {
+        shell->current_fg_job = job;
+        waitpid(job.pid, NULL, WSTOPPED);
+      }
+      else
+      {
+        shell->jobList.addJob(job);
+      }
+      return;
+    }
   }
 
   // in case of child

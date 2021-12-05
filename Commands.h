@@ -84,6 +84,7 @@ public:
     STREAM_STDERR = 2
   };
   PipeType type;
+  SmallShell *shell;
   static Pipe::PipeType getPipeType(std::string cmd_s)
   {
     if (cmd_s.find("|&") != std::string::npos)
@@ -100,6 +101,7 @@ public:
   int std_target;
   int is_father;
   Pipe(PipeType type);
+  void loadShell(SmallShell *shell);
   ~Pipe();
   void config() override;
   void revert() override;
@@ -350,6 +352,7 @@ private:
   SmallShell();
 
 public:
+  bool isMaster = true;
   std::string name;
   char *old_pwd = nullptr;
   JobsList jobList;
