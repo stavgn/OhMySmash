@@ -30,13 +30,6 @@ string _trim(const std::string &s)
   return _rtrim(_ltrim(s));
 }
 
-void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
-{
-  string cmd_s = string(cmd_line);
-  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
-  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
-}
-
 int _parseCommandLine(const char *cmd_line, char **args)
 {
   FUNC_ENTRY()
@@ -53,6 +46,13 @@ int _parseCommandLine(const char *cmd_line, char **args)
 
   FUNC_EXIT()
 }
+
+void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
+{
+  std::string cmd_s = std::string(cmd_line);
+  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
+  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+};
 
 bool _isBackgroundCommand(const char *cmd_line)
 {
@@ -198,7 +198,7 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line) : cmd_line(cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  IOConfig = IOFactory::getIO(args, &numOfArgs);
+  IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line);
 }
 
 void Command::prepare()
@@ -423,9 +423,11 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
     break;
   }
 
-  IOConfig = IOFactory::getPipe(type);
+  IOConfig = IOFactory::getPipe(type, shell);
   cmd1 = shell->CreateCommand(cmd_line1.c_str());
+  cmd1->cmd_line = cmd_line1.c_str();
   cmd2 = shell->CreateCommand(cmd_line2.c_str());
+  cmd2->cmd_line = cmd_line2.c_str();
 }
 
 PipedCommands::~PipedCommands()
@@ -439,17 +441,20 @@ void PipedCommands::execute()
   Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
   if (PipeIO->is_father)
   {
+    cout << "hey fuck" << cmd2->cmd_line << endl;
+
     SmallShell::exec_util(cmd1);
     wait(NULL);
   }
   else
   {
+    cout << "hey jude" << cmd2->cmd_line << endl;
     SmallShell::exec_util(cmd2);
     exit(0);
   }
 }
 
-Pipe::Pipe(PipeType type) : type(type)
+Pipe::Pipe(PipeType type, SmallShell *shell) : type(type), shell(shell)
 {
   pipe(my_pipe);
 }
@@ -459,15 +464,16 @@ void Pipe::config()
   is_father = fork() != 0;
   if (is_father)
   {
-    int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
-    std_target = dup(type);
-    dup2(my_pipe[1], target_fd);
-    close(my_pipe[0]);
-    close(my_pipe[1]);
+    // int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
+    // std_target = dup(type);
+    // dup2(my_pipe[1], target_fd);
+    // close(my_pipe[0]);
+    // close(my_pipe[1]);
   }
   else
   {
     setpgrp();
+    shell->isMaster = false;
     dup2(my_pipe[0], 0);
     close(my_pipe[0]);
     close(my_pipe[1]);
@@ -560,34 +566,39 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
 
 void ExternalCommand::execute()
 {
-  pid_t pid = fork();
-  if (pid < 0)
+  if (shell->isMaster)
   {
-    throw SysCallException("fork");
-  }
-  else if (pid == 0)
-  {
-    setpgrp();
-    is_father = false;
-  }
-  else
-  {
-    is_father = true;
-    job.pid = pid;
-  }
-  if (is_father)
-  {
-    if (is_fg)
+    pid_t pid = fork();
+    if (pid < 0)
     {
-      shell->current_fg_job = job;
-      waitpid(job.pid, NULL, WSTOPPED);
+      throw SysCallException("fork");
+    }
+    else if (pid == 0)
+    {
+      setpgrp();
+      is_father = false;
     }
     else
     {
-      shell->jobList.addJob(job);
+      is_father = true;
+      job.pid = pid;
     }
-    return;
+    if (is_father)
+    {
+      if (is_fg)
+      {
+        shell->current_fg_job = job;
+        waitpid(job.pid, NULL, WSTOPPED);
+      }
+      else
+      {
+        shell->jobList.addJob(job);
+      }
+      return;
+    }
   }
+
+  cout << "Child! " << cmd_line << endl;
 
   // in case of child
   string bash_pth("/bin/bash");
