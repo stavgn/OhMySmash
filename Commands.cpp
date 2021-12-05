@@ -30,13 +30,6 @@ string _trim(const std::string &s)
   return _rtrim(_ltrim(s));
 }
 
-void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
-{
-  string cmd_s = string(cmd_line);
-  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
-  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
-}
-
 int _parseCommandLine(const char *cmd_line, char **args)
 {
   FUNC_ENTRY()
@@ -53,6 +46,13 @@ int _parseCommandLine(const char *cmd_line, char **args)
 
   FUNC_EXIT()
 }
+
+void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
+{
+  std::string cmd_s = std::string(cmd_line);
+  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
+  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+};
 
 bool _isBackgroundCommand(const char *cmd_line)
 {
@@ -198,7 +198,7 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line) : cmd_line(cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  IOConfig = IOFactory::getIO(args, &numOfArgs);
+  IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line);
 }
 
 void Command::prepare()
