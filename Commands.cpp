@@ -30,13 +30,6 @@ string _trim(const std::string &s)
   return _rtrim(_ltrim(s));
 }
 
-void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
-{
-  string cmd_s = string(cmd_line);
-  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
-  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
-}
-
 int _parseCommandLine(const char *cmd_line, char **args)
 {
   FUNC_ENTRY()
@@ -53,6 +46,13 @@ int _parseCommandLine(const char *cmd_line, char **args)
 
   FUNC_EXIT()
 }
+
+void _split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
+{
+  std::string cmd_s = std::string(cmd_line);
+  str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
+  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+};
 
 bool _isBackgroundCommand(const char *cmd_line)
 {
@@ -198,7 +198,7 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line) : cmd_line(cmd_line)
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  IOConfig = IOFactory::getIO(args, &numOfArgs);
+  IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line);
 }
 
 void Command::prepare()
@@ -411,6 +411,8 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
   std::string cmd_line1;
   std::string cmd_line2;
   Pipe::PipeType type = Pipe::getPipeType(string(cmd_line));
+  Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
+  PipeIO->loadShell(shell);
 
   switch (type)
   {
@@ -454,6 +456,11 @@ Pipe::Pipe(PipeType type) : type(type)
   pipe(my_pipe);
 }
 
+void Pipe::loadShell(SmallShell *shell)
+{
+  this->shell = shell;
+}
+
 void Pipe::config()
 {
   is_father = fork() != 0;
@@ -468,6 +475,7 @@ void Pipe::config()
   else
   {
     setpgrp();
+    shell->isMaster = false;
     dup2(my_pipe[0], 0);
     close(my_pipe[0]);
     close(my_pipe[1]);
@@ -560,33 +568,36 @@ ExternalCommand::ExternalCommand(const char *cmd_line, SmallShell *shell) : Comm
 
 void ExternalCommand::execute()
 {
-  pid_t pid = fork();
-  if (pid < 0)
+  if (shell->isMaster)
   {
-    throw SysCallException("fork");
-  }
-  else if (pid == 0)
-  {
-    setpgrp();
-    is_father = false;
-  }
-  else
-  {
-    is_father = true;
-    job.pid = pid;
-  }
-  if (is_father)
-  {
-    if (is_fg)
+    pid_t pid = fork();
+    if (pid < 0)
     {
-      shell->current_fg_job = job;
-      waitpid(job.pid, NULL, WSTOPPED);
+      throw SysCallException("fork");
+    }
+    else if (pid == 0)
+    {
+      setpgrp();
+      is_father = false;
     }
     else
     {
-      shell->jobList.addJob(job);
+      is_father = true;
+      job.pid = pid;
     }
-    return;
+    if (is_father)
+    {
+      if (is_fg)
+      {
+        shell->current_fg_job = job;
+        waitpid(job.pid, NULL, WSTOPPED);
+      }
+      else
+      {
+        shell->jobList.addJob(job);
+      }
+      return;
+    }
   }
 
   // in case of child

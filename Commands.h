@@ -84,6 +84,7 @@ public:
     STREAM_STDERR = 2
   };
   PipeType type;
+  SmallShell *shell;
   static Pipe::PipeType getPipeType(std::string cmd_s)
   {
     if (cmd_s.find("|&") != std::string::npos)
@@ -100,6 +101,7 @@ public:
   int std_target;
   int is_father;
   Pipe(PipeType type);
+  void loadShell(SmallShell *shell);
   ~Pipe();
   void config() override;
   void revert() override;
@@ -110,23 +112,43 @@ class IOFactory
 public:
   IOFactory();
   ~IOFactory();
-  static IO *getIO(char **args, int *numOfArgs)
+  static void split(const char *cmd_line, std::string term, std::string &str1, std::string &str2)
+  {
+    std::string cmd_s = std::string(cmd_line);
+    str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
+    str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+  };
+  static IO *getIO(char **args, int *numOfArgs, const char *cmd_line)
   {
     IO *io = nullptr;
-    if (std::string(args[*numOfArgs - 2]) == ">")
+    std::string cmd_s = std::string(cmd_line);
+
+    std::string filename;
+    std::string temp;
+    if (cmd_s.find(">>") != std::string::npos)
     {
-      io = new CreateOrOverWriteToFile(args[*numOfArgs - 1]);
+      IOFactory::split(cmd_line, ">>", temp, filename);
+      io = new CreateOrAppendToFile(filename);
     }
-    else if (std::string(args[*numOfArgs - 2]) == ">>")
+    else if (cmd_s.find('>') != std::string::npos)
     {
-      io = new CreateOrAppendToFile(args[*numOfArgs - 1]);
+      IOFactory::split(cmd_line, ">", temp, filename);
+      io = new CreateOrOverWriteToFile(filename);
     }
 
     if (io == nullptr)
     {
       return nullptr;
     }
-    *numOfArgs -= 2;
+    while (*numOfArgs > 0)
+    {
+      if (std::string(args[*numOfArgs - 1]) == ">" || std::string(args[*numOfArgs - 1]) == ">>")
+      {
+        (*numOfArgs)--;
+        break;
+      }
+      (*numOfArgs)--;
+    }
     return io;
   }
   static IO *getPipe(Pipe::PipeType type)
@@ -258,7 +280,6 @@ public:
   void execute() override;
 };
 
-
 class ForegroundCommand : public BuiltInCommand
 {
   // TODO: Add your data members
@@ -293,13 +314,13 @@ public:
 
 class TimedJobEntry
 {
-  public:
+public:
   unsigned int alarm_time;
   time_t insert_time;
   ExternalCommand *eCommand;
   bool operator<(const TimedJobEntry &job2) const;
   double time_left() const;
-  TimedJobEntry(unsigned int time_left, ExternalCommand* command);
+  TimedJobEntry(unsigned int time_left, ExternalCommand *command);
   ~TimedJobEntry() {} // should be "delete eCommand;"
 };
 
@@ -309,8 +330,8 @@ public:
   std::priority_queue<TimedJobEntry> timedList;
   TimedJobs() = default;
   ~TimedJobs() = default;
-  void addJob(unsigned int timeKey,  TimedJobEntry& job);
-  const TimedJobEntry& getFirstJob();
+  void addJob(unsigned int timeKey, TimedJobEntry &job);
+  const TimedJobEntry &getFirstJob();
   void removFirstJob();
   bool empty();
 };
@@ -325,15 +346,13 @@ public:
   void execute() override;
 };
 
-
-
-
 class SmallShell
 {
 private:
   SmallShell();
 
 public:
+  bool isMaster = true;
   std::string name;
   char *old_pwd = nullptr;
   JobsList jobList;
@@ -396,8 +415,5 @@ public:
   virtual ~ExternalCommand() {}
   void execute() override;
 };
-
-
-
 
 #endif // SMASH_COMMAND_H_
