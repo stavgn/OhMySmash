@@ -119,9 +119,9 @@ public:
   {
     std::string cmd_s = std::string(cmd_line);
     str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
-    str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+    str2 = cmd_s.substr(cmd_s.find_first_of(term) + term.length());
   };
-  static IO *getIO(char **args, int *numOfArgs, const char *cmd_line)
+  static IO *getIO(char **args, int *numOfArgs, const char *cmd_line, std::string &cmd_ss)
   {
     IO *io = nullptr;
     std::string cmd_s = std::string(cmd_line);
@@ -142,6 +142,10 @@ public:
     if (io == nullptr)
     {
       return nullptr;
+    }
+    else
+    {
+      cmd_ss = temp;
     }
     while (*numOfArgs > 0)
     {
@@ -356,7 +360,7 @@ private:
   SmallShell();
 
 public:
- pid_t smash_pid;
+  pid_t smash_pid;
   bool isMaster = true;
   std::string name;
   char *old_pwd = nullptr;
