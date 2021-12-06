@@ -85,7 +85,8 @@ public:
   };
   PipeType type;
   SmallShell *shell;
-  pid_t pid;
+  pid_t pid_left;
+  pid_t pid_right;
   static Pipe::PipeType getPipeType(std::string cmd_s)
   {
     if (cmd_s.find("|&") != std::string::npos)
@@ -100,7 +101,9 @@ public:
   }
   int my_pipe[2];
   int std_target;
-  int is_father;
+  bool is_father;
+  bool is_left;
+  bool is_right;
   Pipe(PipeType type, SmallShell *shell);
   ~Pipe();
   void config() override;

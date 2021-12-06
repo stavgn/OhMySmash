@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
         }
         catch (...)
         {
-           perror("hello!");
+           perror("hello! You have a bug :)\n");
         }
     }
     return 0;

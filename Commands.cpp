@@ -51,7 +51,7 @@ void _split(const char *cmd_line, std::string term, std::string &str1, std::stri
 {
   std::string cmd_s = std::string(cmd_line);
   str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
-  str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+  str2 = cmd_s.substr(cmd_s.find_first_of(term) + term.length());
 };
 
 bool _isBackgroundCommand(const char *cmd_line)
@@ -442,8 +442,13 @@ void PipedCommands::execute()
   Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
   if (PipeIO->is_father)
   {
-    SmallShell::exec_util(cmd1);
-    waitpid(PipeIO->pid, NULL, WSTOPPED);
+    waitpid(PipeIO->pid_left, NULL, WSTOPPED);
+    PipeIO->revert();
+    waitpid(PipeIO->pid_right, NULL, WSTOPPED);
+  }
+  else if(PipeIO->is_left) {
+      SmallShell::exec_util(cmd1);
+      exit(0);
   }
   else
   {
@@ -459,33 +464,54 @@ Pipe::Pipe(PipeType type, SmallShell *shell) : type(type), shell(shell)
 
 void Pipe::config()
 {
-  pid = fork();
-  is_father = pid != 0;
-  if (is_father)
+  pid_left = fork();
+  if (pid_left < 0)
   {
+    throw SysCallException("fork");
+  }
+  is_father = pid_left != 0;
+  if (pid_left == 0) // left command
+  {
+    setpgrp();
+    is_left = true;
+    is_right = false;
+    shell->isMaster = false;
     int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
     std_target = dup(type);
     dup2(my_pipe[1], target_fd);
     close(my_pipe[0]);
     close(my_pipe[1]);
   }
-  else
+  else 
   {
-    setpgrp();
-    shell->isMaster = false;
-    dup2(my_pipe[0], 0);
-    close(my_pipe[0]);
-    close(my_pipe[1]);
+    shell->isMaster = true;
+    pid_right = fork();
+    if (pid_right < 0)
+    {
+      throw SysCallException("fork");
+    }
+    is_father = pid_right != 0;
+    if (pid_right == 0) // right command
+    {
+      setpgrp();
+      is_right = true;
+      is_left = false;
+      shell->isMaster = false;
+      dup2(my_pipe[0], 0);
+      close(my_pipe[0]);
+      close(my_pipe[1]);
+    }
   }
+
+ 
 }
 
 void Pipe::revert()
 {
   if (is_father)
   {
-    close(type);
-    dup(std_target);
-    close(std_target);
+    close(my_pipe[0]);
+    close(my_pipe[1]);
   }
   reverted = 1;
 }
