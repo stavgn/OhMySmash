@@ -374,7 +374,7 @@ void JobsCommand::execute()
 
 WriteToFile::WriteToFile(std::string filename) : IO()
 {
-  this->filename = filename;
+  this->filename = _trim(filename);
 };
 
 void CreateOrOverWriteToFile::config()
