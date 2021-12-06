@@ -161,6 +161,7 @@ class Command
 
 public:
   const char *cmd_line;
+  std::string cmd_s;
   char *args[COMMAND_MAX_ARGS];
   int numOfArgs;
   IO *IOConfig = nullptr;

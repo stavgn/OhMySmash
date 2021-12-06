@@ -195,7 +195,7 @@ void SmallShell::updateShellName(std::string name)
   this->name = _trim(name) + "> ";
 }
 
-Command::Command(const char *cmd_line) : cmd_line(cmd_line)
+Command::Command(const char *cmd_line) : cmd_line(cmd_line), cmd_s(string(cmd_line))
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
   IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line);
@@ -425,9 +425,9 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
 
   IOConfig = IOFactory::getPipe(type, shell);
   cmd1 = shell->CreateCommand(cmd_line1.c_str());
-  cmd1->cmd_line = cmd_line1.c_str();
+  cmd1->cmd_s = cmd_line1;
   cmd2 = shell->CreateCommand(cmd_line2.c_str());
-  cmd2->cmd_line = cmd_line2.c_str();
+  cmd2->cmd_s = cmd_line2;
 }
 
 PipedCommands::~PipedCommands()
@@ -441,14 +441,11 @@ void PipedCommands::execute()
   Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
   if (PipeIO->is_father)
   {
-    cout << "hey fuck" << cmd2->cmd_line << endl;
-
     SmallShell::exec_util(cmd1);
     wait(NULL);
   }
   else
   {
-    cout << "hey jude" << cmd2->cmd_line << endl;
     SmallShell::exec_util(cmd2);
     exit(0);
   }
@@ -464,11 +461,11 @@ void Pipe::config()
   is_father = fork() != 0;
   if (is_father)
   {
-    // int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
-    // std_target = dup(type);
-    // dup2(my_pipe[1], target_fd);
-    // close(my_pipe[0]);
-    // close(my_pipe[1]);
+    int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
+    std_target = dup(type);
+    dup2(my_pipe[1], target_fd);
+    close(my_pipe[0]);
+    close(my_pipe[1]);
   }
   else
   {
@@ -597,13 +594,10 @@ void ExternalCommand::execute()
       return;
     }
   }
-
-  cout << "Child! " << cmd_line << endl;
-
   // in case of child
   string bash_pth("/bin/bash");
   string bash_flag("-c");
-  string execline = _removeBackgroundSign(cmd_line);
+  string execline = _removeBackgroundSign(cmd_s.c_str());
   string args = bash_flag + execline;
   execl(bash_pth.c_str(), bash_pth.c_str(), bash_flag.c_str(), execline.c_str(), (char *)NULL);
   throw SysCallException("exec");
