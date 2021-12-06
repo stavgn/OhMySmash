@@ -199,7 +199,7 @@ void SmallShell::updateShellName(std::string name)
 Command::Command(const char *cmd_line) : cmd_line(cmd_line), cmd_s(string(cmd_line))
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
-  IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line, cmd_s);
+  IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line);
 }
 
 void Command::prepare()
@@ -253,8 +253,6 @@ void GetCurrDirCommand::execute()
 {
   char cwd[PATH_MAX];
   if (getcwd(cwd, sizeof(cwd)) != NULL)
-
-
   {
     cout << cwd << "\n";
   }
