@@ -34,6 +34,10 @@ void ctrlCHandler(int sig_num)
 
 void alarmHandler(int sig_num)
 {
+  // FILE *fd = fopen("/tmp/myfile.txt", "w");
+  // fprintf(fd, "smash: got an alarm\n");
+  // fflush(fd);
+  // fclose(fd);
   cout <<"smash: got an alarm" << endl << flush;
   SmallShell &smash = SmallShell::getInstance("smash");
   JobEntry &job = (smash.timedJobList.getFirstJob()).eCommand->job;

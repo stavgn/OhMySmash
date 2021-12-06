@@ -902,6 +902,7 @@ void TimedCommand::execute()
   if (timeJobs->empty() || (job->time_left() < timeJobs->getFirstJob().time_left()))
   {
     alarm(job->alarm_time);
+    // cout << "setup alarm!" << endl;
   }
   timeJobs->addJob(job->alarm_time, *job);
   commnad->execute();
