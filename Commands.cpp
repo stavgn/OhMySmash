@@ -374,7 +374,7 @@ void JobsCommand::execute()
 
 WriteToFile::WriteToFile(std::string filename) : IO()
 {
-  this->filename = filename;
+  this->filename = _trim(filename);
 };
 
 void CreateOrOverWriteToFile::config()
@@ -446,9 +446,10 @@ void PipedCommands::execute()
     PipeIO->revert();
     waitpid(PipeIO->pid_right, NULL, WSTOPPED);
   }
-  else if(PipeIO->is_left) {
-      SmallShell::exec_util(cmd1);
-      exit(0);
+  else if (PipeIO->is_left)
+  {
+    SmallShell::exec_util(cmd1);
+    exit(0);
   }
   else
   {
@@ -482,7 +483,7 @@ void Pipe::config()
     close(my_pipe[0]);
     close(my_pipe[1]);
   }
-  else 
+  else
   {
     shell->isMaster = true;
     pid_right = fork();
@@ -502,8 +503,6 @@ void Pipe::config()
       close(my_pipe[1]);
     }
   }
-
- 
 }
 
 void Pipe::revert()
