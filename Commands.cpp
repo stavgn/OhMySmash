@@ -898,6 +898,7 @@ void TimedCommand::execute()
   }
   ExternalCommand *commnad = new ExternalCommand(external_cmd_line.c_str(), shell);
   commnad->job.cmd_line = string(cmd_line);
+  shell->current_fg_job.cmd_line = string(cmd_line);
   TimedJobEntry *job = new TimedJobEntry(stoi(args[1]), commnad);
   if (timeJobs->empty() || (job->time_left() < timeJobs->getFirstJob().time_left()))
   {
