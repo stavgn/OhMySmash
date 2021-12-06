@@ -43,6 +43,11 @@ int main(int argc, char *argv[])
         catch (Exception &e)
         {
             e.handle();
+
+            if (!smash.isMaster)
+            {
+                exit(0);
+            }
         }
         catch (...)
         {

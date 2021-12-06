@@ -426,9 +426,15 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
 
   IOConfig = IOFactory::getPipe(type, shell);
   cmd1 = shell->CreateCommand(cmd_line1.c_str());
-  cmd1->cmd_s = cmd_line1;
+  if (cmd1 != nullptr)
+  {
+    cmd1->cmd_s = cmd_line1;
+  }
   cmd2 = shell->CreateCommand(cmd_line2.c_str());
-  cmd2->cmd_s = cmd_line2;
+  if (cmd2 != nullptr)
+  {
+    cmd2->cmd_s = cmd_line2;
+  }
 }
 
 PipedCommands::~PipedCommands()
@@ -446,9 +452,10 @@ void PipedCommands::execute()
     PipeIO->revert();
     waitpid(PipeIO->pid_right, NULL, WSTOPPED);
   }
-  else if(PipeIO->is_left) {
-      SmallShell::exec_util(cmd1);
-      exit(0);
+  else if (PipeIO->is_left)
+  {
+    SmallShell::exec_util(cmd1);
+    exit(0);
   }
   else
   {
@@ -482,7 +489,7 @@ void Pipe::config()
     close(my_pipe[0]);
     close(my_pipe[1]);
   }
-  else 
+  else
   {
     shell->isMaster = true;
     pid_right = fork();
@@ -502,8 +509,6 @@ void Pipe::config()
       close(my_pipe[1]);
     }
   }
-
- 
 }
 
 void Pipe::revert()
