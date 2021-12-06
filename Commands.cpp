@@ -411,7 +411,6 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
   std::string cmd_line1;
   std::string cmd_line2;
   Pipe::PipeType type = Pipe::getPipeType(string(cmd_line));
-  Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
 
   switch (type)
   {
