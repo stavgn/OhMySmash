@@ -353,6 +353,7 @@ private:
   SmallShell();
 
 public:
+ pid_t smash_pid;
   bool isMaster = true;
   std::string name;
   char *old_pwd = nullptr;

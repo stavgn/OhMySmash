@@ -105,6 +105,7 @@ bool _is_a_number(const char *c, int offset)
 SmallShell::SmallShell(std::string name)
 {
   updateShellName(name);
+  smash_pid = getpid();
 }
 
 SmallShell::~SmallShell()
@@ -267,7 +268,7 @@ ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
 
 void ShowPidCommand::execute()
 {
-  printf("smash pid is %d\n", getpid());
+  printf("smash pid is %d\n", SmallShell::getInstance("smash").smash_pid);
 }
 ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **last_pwd) : BuiltInCommand(cmd_line)
 {
