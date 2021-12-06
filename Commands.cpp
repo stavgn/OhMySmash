@@ -411,6 +411,7 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
   std::string cmd_line1;
   std::string cmd_line2;
   Pipe::PipeType type = Pipe::getPipeType(string(cmd_line));
+  Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
 
   switch (type)
   {
@@ -904,10 +905,12 @@ void TimedCommand::execute()
   }
   ExternalCommand *commnad = new ExternalCommand(external_cmd_line.c_str(), shell);
   commnad->job.cmd_line = string(cmd_line);
+  shell->current_fg_job.cmd_line = string(cmd_line);
   TimedJobEntry *job = new TimedJobEntry(stoi(args[1]), commnad);
   if (timeJobs->empty() || (job->time_left() < timeJobs->getFirstJob().time_left()))
   {
     alarm(job->alarm_time);
+    // cout << "setup alarm!" << endl;
   }
   timeJobs->addJob(job->alarm_time, *job);
   commnad->execute();
