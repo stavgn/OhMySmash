@@ -85,6 +85,7 @@ public:
   };
   PipeType type;
   SmallShell *shell;
+  pid_t pid;
   static Pipe::PipeType getPipeType(std::string cmd_s)
   {
     if (cmd_s.find("|&") != std::string::npos)
@@ -100,8 +101,7 @@ public:
   int my_pipe[2];
   int std_target;
   int is_father;
-  Pipe(PipeType type);
-  void loadShell(SmallShell *shell);
+  Pipe(PipeType type, SmallShell *shell);
   ~Pipe();
   void config() override;
   void revert() override;
@@ -151,9 +151,9 @@ public:
     }
     return io;
   }
-  static IO *getPipe(Pipe::PipeType type)
+  static IO *getPipe(Pipe::PipeType type, SmallShell *shell)
   {
-    return new Pipe(type);
+    return new Pipe(type, shell);
   }
 };
 
@@ -162,6 +162,7 @@ class Command
 
 public:
   const char *cmd_line;
+  std::string cmd_s;
   char *args[COMMAND_MAX_ARGS];
   int numOfArgs;
   IO *IOConfig = nullptr;

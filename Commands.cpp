@@ -195,7 +195,7 @@ void SmallShell::updateShellName(std::string name)
   this->name = _trim(name) + "> ";
 }
 
-Command::Command(const char *cmd_line) : cmd_line(cmd_line)
+Command::Command(const char *cmd_line) : cmd_line(cmd_line), cmd_s(string(cmd_line))
 {
   numOfArgs = _parseCommandLine(cmd_line, args);
   IOConfig = IOFactory::getIO(args, &numOfArgs, cmd_line);
@@ -412,7 +412,6 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
   std::string cmd_line2;
   Pipe::PipeType type = Pipe::getPipeType(string(cmd_line));
   Pipe *PipeIO = dynamic_cast<Pipe *>(IOConfig);
-  PipeIO->loadShell(shell);
 
   switch (type)
   {
@@ -425,9 +424,11 @@ PipedCommands::PipedCommands(const char *cmd_line, SmallShell *shell) : Command(
     break;
   }
 
-  IOConfig = IOFactory::getPipe(type);
+  IOConfig = IOFactory::getPipe(type, shell);
   cmd1 = shell->CreateCommand(cmd_line1.c_str());
+  cmd1->cmd_s = cmd_line1;
   cmd2 = shell->CreateCommand(cmd_line2.c_str());
+  cmd2->cmd_s = cmd_line2;
 }
 
 PipedCommands::~PipedCommands()
@@ -442,7 +443,7 @@ void PipedCommands::execute()
   if (PipeIO->is_father)
   {
     SmallShell::exec_util(cmd1);
-    wait(NULL);
+    waitpid(PipeIO->pid, NULL, WSTOPPED);
   }
   else
   {
@@ -451,19 +452,15 @@ void PipedCommands::execute()
   }
 }
 
-Pipe::Pipe(PipeType type) : type(type)
+Pipe::Pipe(PipeType type, SmallShell *shell) : type(type), shell(shell)
 {
   pipe(my_pipe);
 }
 
-void Pipe::loadShell(SmallShell *shell)
-{
-  this->shell = shell;
-}
-
 void Pipe::config()
 {
-  is_father = fork() != 0;
+  pid = fork();
+  is_father = pid != 0;
   if (is_father)
   {
     int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;
@@ -599,11 +596,10 @@ void ExternalCommand::execute()
       return;
     }
   }
-
   // in case of child
   string bash_pth("/bin/bash");
   string bash_flag("-c");
-  string execline = _removeBackgroundSign(cmd_line);
+  string execline = _removeBackgroundSign(cmd_s.c_str());
   string args = bash_flag + execline;
   execl(bash_pth.c_str(), bash_pth.c_str(), bash_flag.c_str(), execline.c_str(), (char *)NULL);
   throw SysCallException("exec");
