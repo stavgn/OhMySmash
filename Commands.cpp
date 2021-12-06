@@ -442,7 +442,7 @@ void PipedCommands::execute()
   if (PipeIO->is_father)
   {
     SmallShell::exec_util(cmd1);
-    wait(NULL);
+    waitpid(PipeIO->pid, NULL, WSTOPPED);
   }
   else
   {
@@ -458,7 +458,8 @@ Pipe::Pipe(PipeType type, SmallShell *shell) : type(type), shell(shell)
 
 void Pipe::config()
 {
-  is_father = fork() != 0;
+  pid = fork();
+  is_father = pid != 0;
   if (is_father)
   {
     int target_fd = type == Pipe::STREAM_STDOUT ? 1 : 2;

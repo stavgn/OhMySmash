@@ -85,6 +85,7 @@ public:
   };
   PipeType type;
   SmallShell *shell;
+  pid_t pid;
   static Pipe::PipeType getPipeType(std::string cmd_s)
   {
     if (cmd_s.find("|&") != std::string::npos)
