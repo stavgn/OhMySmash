@@ -425,11 +425,12 @@ void CreateOrAppendToFile::config()
 void WriteToFile::revert()
 {
   if (fd > 0)
-   { close(1);
-  dup(stdout);
-  close(stdout);
-  close(fd);
-}
+  {
+    close(1);
+    dup(stdout);
+    close(stdout);
+    close(fd);
+  }
   reverted = 1;
 }
 
@@ -561,15 +562,19 @@ Pipe::~Pipe()
 void JobsList::addJob(JobEntry job)
 {
   removeFinishedJobs();
-  if (jobsList.empty())
+  if (job.jid == 0) //if you dont have job id
   {
-    job.jid = 1;
+    if (jobsList.empty())
+    {
+      job.jid = 1;
+    }
+    else
+    {
+      JobEntry max_job = jobsList.rbegin()->second;
+      job.jid = max_job.jid + 1;
+    }
   }
-  else if (job.jid == 0)
-  {
-    JobEntry max_job = jobsList.rbegin()->second;
-    job.jid = max_job.jid + 1;
-  }
+
   job.time = time(NULL);
   jobsList[job.jid] = job;
 }
