@@ -6,3 +6,4 @@ CMakeLists.txt
 build/.cmake/api/v1/query/client-vscode/query.json
 /testing
 tmp
+/TESTS/*
