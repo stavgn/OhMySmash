@@ -119,7 +119,7 @@ public:
   {
     std::string cmd_s = std::string(cmd_line);
     str1 = cmd_s.substr(0, cmd_s.find_first_of(term));
-    str2 = cmd_s.substr(cmd_s.find_first_of(term) + 1);
+    str2 = cmd_s.substr(cmd_s.find_first_of(term) + term.length());
   };
   static IO *getIO(char **args, int *numOfArgs, const char *cmd_line)
   {
