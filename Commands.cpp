@@ -188,17 +188,20 @@ void SmallShell::executeCommand(const char *cmd_line)
   // TODO: Add your implementation here
   // for example:
   Command *cmd = CreateCommand(cmd_line);
-  try  {
-	SmallShell::exec_util(cmd);
-	}
-	catch(SysCallException &e ){
-		cmd->cleanup();
-		throw e;
-		}
-	catch(Exception &e) {
-		cmd->cleanup();
-		throw e;
-		}
+  try
+  {
+    SmallShell::exec_util(cmd);
+  }
+  catch (SysCallException &e)
+  {
+    cmd->cleanup();
+    throw e;
+  }
+  catch (Exception &e)
+  {
+    cmd->cleanup();
+    throw e;
+  }
 }
 
 void SmallShell::updateShellName(std::string name)
@@ -224,7 +227,7 @@ void Command::cleanup()
 {
   if (IOConfig != nullptr)
   {
-	 cout << flush;
+    cout << flush;
     IOConfig->revert();
   }
 }
@@ -265,7 +268,8 @@ void GetCurrDirCommand::execute()
   char cwd[PATH_MAX];
   if (getcwd(cwd, sizeof(cwd)) != NULL)
   {
-    cout << cwd << endl << flush;
+    cout << cwd << endl
+         << flush;
   }
   else
   {
@@ -279,8 +283,8 @@ ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
 
 void ShowPidCommand::execute()
 {
-  cout << "smash pid is " << SmallShell::getInstance("smash").smash_pid << endl << flush;
-  
+  cout << "smash pid is " << SmallShell::getInstance("smash").smash_pid << endl
+       << flush;
 }
 ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **last_pwd) : BuiltInCommand(cmd_line)
 {
@@ -392,7 +396,8 @@ WriteToFile::WriteToFile(std::string filename) : IO()
 void CreateOrOverWriteToFile::config()
 {
   int fd = open(filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
-  if(fd < 0) {
+  if (fd < 0)
+  {
     throw SysCallException("open");
   }
   int stdout = dup(1);
@@ -405,7 +410,8 @@ void CreateOrOverWriteToFile::config()
 void CreateOrAppendToFile::config()
 {
   int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0666);
-    if(fd < 0) {
+  if (fd < 0)
+  {
     throw SysCallException("open");
   }
   lseek(fd, 0, SEEK_END);
@@ -418,10 +424,12 @@ void CreateOrAppendToFile::config()
 
 void WriteToFile::revert()
 {
-  close(1);
+  if (fd > 0)
+   { close(1);
   dup(stdout);
   close(stdout);
   close(fd);
+}
   reverted = 1;
 }
 
@@ -580,9 +588,9 @@ void JobsList::printJobsList()
     {
       cout << " (stopped)";
     }
-    cout << endl << flush;
+    cout << endl
+         << flush;
   }
-  
 }
 
 void JobsList::printJobsList2()
@@ -592,7 +600,8 @@ void JobsList::printJobsList2()
     JobEntry cur_job = i->second;
     cout << cur_job.jid << ": ";
     cout << cur_job.cmd_line;
-    cout << endl << flush;
+    cout << endl
+         << flush;
   }
 }
 
