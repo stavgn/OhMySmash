@@ -268,7 +268,7 @@ class JobsCommand : public BuiltInCommand
   // TODO: Add your data members
 public:
   JobsList *jobList;
-  JobsCommand(const char *cmd_line, JobsList *jobs) : jobList(jobs) {}
+  JobsCommand(const char *cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line), jobList(jobs) {}
   virtual ~JobsCommand() {}
   void execute() override;
 };
