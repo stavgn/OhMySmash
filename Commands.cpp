@@ -188,7 +188,17 @@ void SmallShell::executeCommand(const char *cmd_line)
   // TODO: Add your implementation here
   // for example:
   Command *cmd = CreateCommand(cmd_line);
-  SmallShell::exec_util(cmd);
+  try  {
+	SmallShell::exec_util(cmd);
+	}
+	catch(SysCallException &e ){
+		cmd->cleanup();
+		throw e;
+		}
+	catch(Exception &e) {
+		cmd->cleanup();
+		throw e;
+		}
 }
 
 void SmallShell::updateShellName(std::string name)
@@ -382,6 +392,9 @@ WriteToFile::WriteToFile(std::string filename) : IO()
 void CreateOrOverWriteToFile::config()
 {
   int fd = open(filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
+  if(fd < 0) {
+    throw SysCallException("open");
+  }
   int stdout = dup(1);
   close(1);
   dup(fd);
@@ -392,6 +405,9 @@ void CreateOrOverWriteToFile::config()
 void CreateOrAppendToFile::config()
 {
   int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0666);
+    if(fd < 0) {
+    throw SysCallException("open");
+  }
   lseek(fd, 0, SEEK_END);
   int stdout = dup(1);
   close(1);
