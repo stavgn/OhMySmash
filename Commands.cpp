@@ -214,6 +214,7 @@ void Command::cleanup()
 {
   if (IOConfig != nullptr)
   {
+	 cout << flush;
     IOConfig->revert();
   }
 }
@@ -256,7 +257,7 @@ void GetCurrDirCommand::execute()
 
 
   {
-    cout << cwd << "\n";
+    cout << cwd << endl << flush;
   }
   else
   {
@@ -270,7 +271,8 @@ ShowPidCommand::ShowPidCommand(const char *cmd_line) : BuiltInCommand(cmd_line)
 
 void ShowPidCommand::execute()
 {
-  printf("smash pid is %d\n", SmallShell::getInstance("smash").smash_pid);
+  cout << "smash pid is " << SmallShell::getInstance("smash").smash_pid << endl << flush;
+  
 }
 ChangeDirCommand::ChangeDirCommand(const char *cmd_line, char **last_pwd) : BuiltInCommand(cmd_line)
 {
@@ -381,7 +383,7 @@ WriteToFile::WriteToFile(std::string filename) : IO()
 
 void CreateOrOverWriteToFile::config()
 {
-  int fd = open(filename.c_str(), O_RDWR | O_CREAT, 0666);
+  int fd = open(filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
   int stdout = dup(1);
   close(1);
   dup(fd);
@@ -564,8 +566,9 @@ void JobsList::printJobsList()
     {
       cout << " (stopped)";
     }
-    cout << endl;
+    cout << endl << flush;
   }
+  
 }
 
 void JobsList::printJobsList2()
@@ -575,7 +578,7 @@ void JobsList::printJobsList2()
     JobEntry cur_job = i->second;
     cout << cur_job.jid << ": ";
     cout << cur_job.cmd_line;
-    cout << endl;
+    cout << endl << flush;
   }
 }
 
